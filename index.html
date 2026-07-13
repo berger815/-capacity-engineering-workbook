@@ -2278,7 +2278,8 @@ function buildP8(){
 }
 function renderFpSummaryBars(){
   var el=document.getElementById('fp_summary_bars');if(!el)return;
-  var D=STATE.depts,Y=STATE.years,html='',prodAvail=0,prodAvailComplete=true,whRisk=0;
+  var D=STATE.depts,Y=STATE.years,html='',prodAvail=0,prodAvailComplete=true,whRisk=0,hasAnyDemand=false;
+  for(var dm=0;dm<STATE.mlis.length&&!hasAnyDemand;dm++)for(var dy=0;dy<STATE.years.length&&!hasAnyDemand;dy++)if(getDemAnnual(dm,dy)>0)hasAnyDemand=true;
   var missing=getFpMissingInputs(),capMissing=[];
   for(var i=0;i<D.length;i++){
     if(D[i].type==='off')continue;
@@ -2299,14 +2300,14 @@ function renderFpSummaryBars(){
   }
   el.innerHTML=html;
   var prodPeak=getFootprintGroupPeak('prod'),prodGap=prodPeak.total-prodAvail,prodWhen=prodPeak.total>0?MONTHS[prodPeak.mo]+' '+Y[prodPeak.yi]:'';
-  setText('fp_prod_avail',prodAvailComplete?fmt(Math.round(prodAvail))+' sq ft':'Incomplete');
+  setText('fp_prod_avail',prodAvailComplete?fmt(Math.round(prodAvail))+' sq ft':prodPeak.total>0?'Incomplete':'--');
   setText('fp_prod_req',prodPeak.total>0?fmt(Math.round(prodPeak.total))+' sq ft'+(prodWhen?' · '+prodWhen:''):'--');
   setText('fp_prod_gap',prodPeak.total>0&&prodAvailComplete?(prodGap>0?'+':'')+fmt(Math.round(prodGap))+' sq ft':'--');
   setText('fp_wh_risk',whRisk+' area'+(whRisk===1?'':'s'));
   var warn=document.getElementById('fp_data_warning');if(warn){
     var issues=missing.slice(0,8).map(function(x){return escH(STATE.depts[x.di].name)+' / '+escH(STATE.mlis[x.mi].code)+': '+escH(x.field);});
     capMissing.slice(0,4).forEach(function(di){issues.push(escH(STATE.depts[di].name)+': Available capacity');});
-    warn.innerHTML=issues.length?'<div class="infobox ib-y"><b>⚠ Footprint incomplete:</b> '+(missing.length+capMissing.length)+' required input'+((missing.length+capMissing.length)===1?' is':'s are')+' missing.<br><span style="font-size:10px">'+issues.join(' · ')+(missing.length+capMissing.length>issues.length?' · …':'')+'</span></div>':'<div class="infobox ib-g"><b>✓ Footprint inputs complete</b> for all products with demand.</div>';
+    warn.innerHTML=!hasAnyDemand?'<div class="infobox ib-b"><b>Enter demand</b> to calculate monthly footprint and storage peaks.</div>':issues.length?'<div class="infobox ib-y"><b>⚠ Footprint incomplete:</b> '+(missing.length+capMissing.length)+' required input'+((missing.length+capMissing.length)===1?' is':'s are')+' missing.<br><span style="font-size:10px">'+issues.join(' · ')+(missing.length+capMissing.length>issues.length?' · …':'')+'</span></div>':'<div class="infobox ib-g"><b>✓ Footprint inputs complete</b> for all products with demand.</div>';
   }
 }
 function renderFpDeptDetail(i){
