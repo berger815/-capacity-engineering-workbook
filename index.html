@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="A self-contained capacity and engineering planning workbook.">
-<title>Capacity &amp; Engineering Workbook v6.74</title>
+<title>Capacity &amp; Engineering Workbook v6.75</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:13px;}
@@ -31,6 +31,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;fo
 .nav-err-dot.on{display:block;}
 .pg{display:none;padding:20px 24px;}
 .pg.on{display:block;}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:16px;}
+.guide-card{background:white;border:1px solid #e2e8f0;border-left:4px solid #4299e1;border-radius:8px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,.06);}
+.guide-card h2{font-size:14px;margin-bottom:8px;color:#1a365d;}.guide-card h3{font-size:12px;margin:12px 0 5px;}
+.guide-card p,.guide-card li{font-size:12px;line-height:1.55;color:#4a5568}.guide-card ul,.guide-card ol{padding-left:20px;}
+.guide-card li+li{margin-top:4px}.guide-card.warn{border-left-color:#d69e2e}.guide-card.safe{border-left-color:#38a169}.guide-card.lt{border-left-color:#805ad5}
+.guide-steps{counter-reset:guide-step;list-style:none!important;padding-left:0!important}.guide-steps li{counter-increment:guide-step;padding-left:34px;position:relative;min-height:26px}.guide-steps li:before{content:counter(guide-step);position:absolute;left:0;top:0;width:23px;height:23px;border-radius:50%;background:#2b6cb0;color:white;text-align:center;line-height:23px;font-weight:700;font-size:11px}
+.guide-table{width:100%;border-collapse:collapse}.guide-table th,.guide-table td{padding:7px 8px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:11px;vertical-align:top}.guide-table th{background:#1a1a2e;color:white}
 .card{background:white;border-radius:8px;padding:16px 20px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.08);border-left:4px solid #63b3ed;}
 .card.red{border-left-color:#e53e3e;}.card.grn{border-left-color:#38a169;}.card.ylw{border-left-color:#d69e2e;}.card.pur{border-left-color:#805ad5;}.card.org{border-left-color:#dd6b20;}.card.tel{border-left-color:#319795;}.card.pnk{border-left-color:#d53f8c;}.card.dark{border-left-color:#1a1a2e;}.card.lt-card{border-left-color:#6b46c1;}
 .card h2{font-size:13px;font-weight:700;margin-bottom:2px;}
@@ -298,7 +305,7 @@ input[type=number].ni{text-align:right;}
 <body>
 <div class="hdr">
   <div class="hdr-left">
-    <h1 id="hdr_title">Capacity &amp; Engineering Workbook v6.74</h1>
+    <h1 id="hdr_title">Capacity &amp; Engineering Workbook v6.75</h1>
     <div class="sub" id="hdr_sub">Capacity Planning</div>
     <div class="hdr-save-meta" id="hdr_save_ts"></div>
   </div>
@@ -316,6 +323,7 @@ input[type=number].ni{text-align:right;}
 
 <div class="nav">
   <button class="setup-btn on" onclick="tab('p0',this)" id="nav_p0">⚙ Setup<span class="nav-dot" id="dot_p0"></span></button>
+  <button onclick="tab('pGuide',this)" id="nav_pGuide">📘 User Guide</button>
   <button onclick="tab('p1',this)" id="nav_p1">Demand<span class="nav-dot" id="dot_p1"></span></button>
   <button class="lt-btn" onclick="tab('pLT',this)" id="nav_pLT">⏳ Lead Times <span class="tag tag-g" style="font-size:9px">✓</span><span class="nav-err-dot" id="dot_pLT"></span></button>
   <button onclick="tab('p2',this)" id="nav_p2">Base Capacity<span class="nav-dot" id="dot_p2"></span></button>
@@ -378,17 +386,31 @@ input[type=number].ni{text-align:right;}
   </div>
 </div>
 
+<div id="pGuide" class="pg">
+  <div class="infobox ib-b" style="margin-bottom:16px"><b>📘 User Guide — Capacity &amp; Engineering Workbook v6.75</b><br>This workbook runs entirely in one browser page. Your working data stays in this browser unless you export and share a JSON backup.</div>
+  <div class="guide-grid">
+    <section class="guide-card safe"><h2>Quick Start</h2><ol class="guide-steps"><li>Enter organization details, product lines, departments, and checklist items on <b>Setup</b>.</li><li>Generate the workbook. Regenerating intentionally clears downstream entries.</li><li>Enter delivery quantities on <b>Demand</b> using annual, quarterly, or monthly resolution.</li><li>Enter capacity, standard hours, efficiency, and optional demonstrated capacity.</li><li>Configure phases and department assignments on <b>Lead Times</b>.</li><li>Review Utilization, Gap Chart, Headcount, Recovery, and Executive Summary.</li><li>Use <b>Export</b> regularly to create a portable backup.</li></ol></section>
+    <section class="guide-card"><h2>Demand Resolution</h2><table class="guide-table"><tr><th>Mode</th><th>Use</th></tr><tr><td>Annual</td><td>Long-range totals. If no sub-annual schedule exists, calculations distribute annual demand evenly for period views.</td></tr><tr><td>Quarterly</td><td>Seasonal planning by quarter. Each quarter is divided evenly when a monthly calculation is required.</td></tr><tr><td>Monthly</td><td>Most precise timing. Once a product/year has monthly entries, blank months mean zero.</td></tr></table><h3>Important</h3><p>Demand is always entered at the delivery or ship date. Lead-time settings move capacity work earlier without changing the original forecast.</p></section>
+    <section class="guide-card lt"><h2>Lead Time and Spread</h2><ul><li><b>Start Week</b> is how many weeks before delivery the phase begins.</li><li><b>End Week</b> is where that phase finishes before delivery.</li><li><b>LT Adjust OFF:</b> capacity is shown at delivery timing.</li><li><b>LT Adjust ON, Spread OFF:</b> the full phase load is placed at its start-by month.</li><li><b>Spread ON:</b> hours are distributed evenly across the phase window from Start Week to End Week.</li><li>A valid phase requires Start Week &gt; End Week, values from 0–260, and a department assignment.</li></ul><p style="margin-top:8px">A phase can cross a calendar boundary. A four-week phase may therefore touch one or two months, but its total hours must remain unchanged.</p></section>
+    <section class="guide-card warn"><h2>Forecast Boundaries</h2><p>Lead-time work may occur before the first forecast month. Those hours cannot be displayed inside the selected horizon. The Utilization tab warns when work is clipped.</p><h3>Best practice</h3><ul><li>Start the forecast early enough to include the longest lead time.</li><li>Add a buffer year when planning long phases.</li><li>Resolve every red Lead Time warning before relying on capacity results.</li></ul></section>
+    <section class="guide-card"><h2>How Capacity Is Calculated</h2><p><b>Required hours</b> = Demand × Standard Hours × (1 + Rework%) × Office Copy Factor.</p><p style="margin-top:6px"><b>Available hours</b> use demonstrated capacity when supplied; otherwise Base Hours × Efficiency or OEE.</p><table class="guide-table" style="margin-top:8px"><tr><th>RAG</th><th>Meaning</th></tr><tr><td>Green</td><td>Below 85% utilization</td></tr><tr><td>Yellow</td><td>85% through 100%</td></tr><tr><td>Red</td><td>Above 100%</td></tr></table></section>
+    <section class="guide-card"><h2>Tabs at a Glance</h2><ul><li><b>Base Capacity:</b> theoretical or demonstrated available hours.</li><li><b>Std Hours &amp; Inputs:</b> routing hours, copy factors, floor space, and dwell.</li><li><b>Efficiency &amp; OEE:</b> availability losses, rework, and optional OEE.</li><li><b>Utilization:</b> period load, capacity, utilization, and gap.</li><li><b>Gap Chart:</b> demand versus capacity visualization.</li><li><b>Scenarios &amp; Recovery:</b> capacity scenarios and dated milestones.</li><li><b>Footprint / Headcount:</b> facility and staffing requirements.</li><li><b>Action Log / Exec Summary:</b> ownership and management output.</li></ul></section>
+    <section class="guide-card safe"><h2>Saving and Sharing</h2><ul><li>Autosave uses browser storage after the workbook is generated.</li><li><b>Export</b> downloads a JSON backup containing workbook data.</li><li><b>Import</b> replaces the current workbook after validation and confirmation.</li><li>Only import files from people you trust.</li><li>Clearing saved data removes both workbook data and saved commentary from this browser.</li></ul><p style="margin-top:8px"><b>Recommended:</b> export after major planning sessions and before regenerating the workbook.</p></section>
+    <section class="guide-card warn"><h2>Troubleshooting</h2><ul><li><b>Monthly totals look low:</b> confirm whether blank months are intentionally zero.</li><li><b>Load moved earlier:</b> check the department’s phase assignment and Start Week.</li><li><b>Summary and detail differ:</b> refresh the page and confirm you are on v6.75 or later.</li><li><b>Hours clipped:</b> extend the forecast start earlier.</li><li><b>Autosave failed:</b> export immediately; browser storage may be full.</li><li><b>Old page after deployment:</b> reload or open the page with a fresh query string.</li></ul></section>
+  </div>
+</div>
+
 
 <div id="p1" class="pg"><div id="p1_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
 <div id="pLT" class="pg">
   <div class="card lt-card">
-    <h2>⏳ Lead Times — Phase Configuration <span style="font-size:10px;font-weight:400;color:#718096;margin-left:8px">v6.74</span></h2>
+    <h2>⏳ Lead Times — Phase Configuration <span style="font-size:10px;font-weight:400;color:#718096;margin-left:8px">v6.75</span></h2>
     <div class="sub">Define independent lead time phases per MLI. Assign each department to exactly one phase per MLI. The model places full demand at Delivery Date − Phase Start Week for that department's capacity calculation.</div>
   </div>
   <div id="pLT_not_generated" class="infobox ib-y" style="display:block">Complete Setup and generate the workbook first.</div>
   <div id="pLT_content" style="display:none">
     <div id="lt_global_banner"></div>
-    <div class="infobox ib-lt"><b>How it works:</b> Each MLI has its own set of phases with independent start/end weeks. Each department is assigned to one phase per MLI. The model shifts that department's full demand by the phase Start Week before delivery. End week is visual only. Ship-date demand on the Demand tab is never modified — only the capacity calculation shifts. If a department has no phase assigned, demand appears at delivery date and an error is flagged.</div>
+    <div class="infobox ib-lt"><b>How it works:</b> Each MLI has its own phases and every department is assigned to one phase. With Spread OFF, the full phase load is placed at the Start Week before delivery. With Spread ON, hours are distributed from Start Week through End Week. Ship-date demand is never modified. Invalid or missing assignments keep demand at delivery timing and raise an error.</div>
     <div id="lt_mli_tabs" class="lt-mli-tabs"></div>
     <div class="card lt-card">
       <div class="lt-section-hdr">
@@ -530,7 +552,8 @@ var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','D
 var QUARTERS=['Q1','Q2','Q3','Q4'];
 var LS_KEY='capacity_workbook_v674';
 var LS_COMM='capacity_workbook_commentary_v674';
-var autoSaveTimer=null,commTimer=null;
+var autoSaveTimer=null,commTimer=null,recalcTimer=null,autosavePaused=false;
+var loadYearSel='',loadPeriodSel='';
 var mliC=0,deptC=0,clC=0,rampMsC=0;
 var rampMetric={};
 var ltConfig={phases:{},deptMap:{}};
@@ -550,7 +573,8 @@ var SC_OPTIONS=[
 // UTILITIES
 // ─────────────────────────────────────────────────────────────────────────────
 function safeDiv(a,b){return b>0?a/b:NaN;}
-function gv(id){var e=document.getElementById(id);if(!e)return 0;var n=parseFloat(e.value);return isNaN(n)?0:n;}
+function clampNum(v,min,max,fallback){var n=Number(v);if(!Number.isFinite(n))return fallback===undefined?0:fallback;if(min!==undefined&&n<min)n=min;if(max!==undefined&&n>max)n=max;return n;}
+function gv(id){var e=document.getElementById(id);if(!e)return 0;return clampNum(parseFloat(e.value),0,undefined,0);}
 function sv(id){var e=document.getElementById(id);return e?e.value||'':'';}
 function setText(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
 function setHTML(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v;}
@@ -566,13 +590,32 @@ function scMultForVal(val){for(var i=0;i<SC_OPTIONS.length;i++)if(SC_OPTIONS[i].
 function scOptHTML(sel){return SC_OPTIONS.map(function(o){return'<option value="'+o.val+'"'+(o.val===sel?' selected':'')+'>'+o.label+'</option>';}).join('');}
 function barRow(lbl,pct,col,val){return'<div class="bar-row"><div class="bar-lbl">'+lbl+'</div><div class="bar-track"><div class="bar-fill" style="width:'+Math.max(pct,0).toFixed(1)+'%;background:'+col+'">'+val+'</div></div><div class="bar-val">'+val+'</div></div>';}
 function deepCopy(o){return JSON.parse(JSON.stringify(o));}
-function escH(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escH(s){if(s===null||s===undefined)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function cleanText(v,maxLen){var s=v===null||v===undefined?'':String(v);return s.slice(0,maxLen||500);}
+function safeColor(v){return/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):'#4299e1';}
+function own(obj,key){return!!obj&&Object.prototype.hasOwnProperty.call(obj,key);}
+function enforceNumericBounds(el){
+  if(!el||el.tagName!=='INPUT'||el.type!=='number'||el.value==='')return;
+  var n=Number(el.value);if(!Number.isFinite(n)){el.value='';return;}
+  if(el.min!==''&&n<Number(el.min))n=Number(el.min);if(el.max!==''&&n>Number(el.max))n=Number(el.max);el.value=n;
+}
+document.addEventListener('change',function(e){enforceNumericBounds(e.target);});
+document.addEventListener('input',function(){autosavePaused=false;},true);
+document.addEventListener('change',function(){autosavePaused=false;},true);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LEAD TIME PHASE SYSTEM
 // ─────────────────────────────────────────────────────────────────────────────
 function getPhases(mi){if(!ltConfig.phases[mi])ltConfig.phases[mi]=[];return ltConfig.phases[mi];}
 function getDeptMap(mi){if(!ltConfig.deptMap[mi])ltConfig.deptMap[mi]={};return ltConfig.deptMap[mi];}
+function validatePhase(phase){
+  if(!phase)return{ok:false,msg:'Assigned phase not found'};
+  var start=Number(phase.startWk),end=Number(phase.endWk);
+  if(!Number.isFinite(start)||!Number.isFinite(end))return{ok:false,msg:'Phase weeks must be numeric'};
+  if(start<1||start>260||end<0||end>260)return{ok:false,msg:'Phase weeks must be within 0–260'};
+  if(start<=end)return{ok:false,msg:'Phase Start Week must be greater than End Week'};
+  return{ok:true,startWk:start,endWk:end};
+}
 
 function getLTForDept(mi,di,dryRun){
   if(!leadTimeAdjust)return{status:'nolt',shiftWks:0,msg:''};
@@ -590,7 +633,13 @@ function getLTForDept(mi,di,dryRun){
     if(!dryRun)ltErrors.push(err);
     return{status:'error',shiftWks:0,msg:err.msg};
   }
-  return{status:'ok',shiftWks:phase.startWk||0,msg:'',phase:phase};
+  var pv=validatePhase(phase);
+  if(!pv.ok){
+    var err={mi:mi,di:di,mliCode:STATE.mlis[mi]?STATE.mlis[mi].code:'MLI'+mi,deptName:STATE.depts[di]?STATE.depts[di].name:'Dept'+di,msg:pv.msg};
+    if(!dryRun)ltErrors.push(err);
+    return{status:'error',shiftWks:0,msg:err.msg,phase:phase};
+  }
+  return{status:'ok',shiftWks:pv.startWk,msg:'',phase:phase};
 }
 
 function runLTValidation(){
@@ -604,19 +653,22 @@ function runLTValidation(){
 }
 
 function getLTErrCount(){
-  var c=0;
+  var c=0,prevAdj=leadTimeAdjust;leadTimeAdjust=true;
   for(var mi=0;mi<STATE.mlis.length;mi++)
     for(var di=0;di<STATE.depts.length;di++){
       var r=getLTForDept(mi,di,true);
       if(r.status==='error')c++;
     }
+  leadTimeAdjust=prevAdj;
   return c;
 }
 
 function mliHasErrors(mi){
+  var prevAdj=leadTimeAdjust;leadTimeAdjust=true;
   for(var di=0;di<STATE.depts.length;di++){
-    var r=getLTForDept(mi,di,true);if(r.status==='error')return true;
+    var r=getLTForDept(mi,di,true);if(r.status==='error'){leadTimeAdjust=prevAdj;return true;}
   }
+  leadTimeAdjust=prevAdj;
   return false;
 }
 
@@ -685,7 +737,7 @@ var LT_SPREAD_MO_WKS = 52 / 12; // 4.3333 weeks per month
  * month itself is the ship date, not a work month. The window is capped there.
  */
 function spreadHoursIntoMonthly(totalHrs, durWks, startWk, endWk, deliveryAbsMo, monthly, nMo) {
-  if (totalHrs <= 0) return;
+  if (totalHrs <= 0) return 0;
 
   // Continuous phase window, expressed in absolute month coordinates.
   // winStart = earliest point (furthest from delivery), winEnd = latest point (closest to delivery).
@@ -700,8 +752,7 @@ function spreadHoursIntoMonthly(totalHrs, durWks, startWk, endWk, deliveryAbsMo,
   // Guard: zero/negative duration, or a degenerate window — place everything at startWk offset
   if (durWks <= 0 || startWk <= endWk || winLen <= 0) {
     var tMo = deliveryAbsMo - startWk / LT_SPREAD_MO_WKS;
-    placeHrsAtMonth(totalHrs, tMo, monthly, nMo, deliveryAbsMo);
-    return;
+    return placeHrsAtMonth(totalHrs, tMo, monthly, nMo, deliveryAbsMo);
   }
 
   var hrsPerMonth = totalHrs / winLen; // uniform density across the continuous window
@@ -709,6 +760,7 @@ function spreadHoursIntoMonthly(totalHrs, durWks, startWk, endWk, deliveryAbsMo,
   var mFirst = Math.floor(winStart);
   var mLast  = Math.floor(winEnd - 1e-9); // last month index the window actually touches
 
+  var allocated=0;
   for (var m = mFirst; m <= mLast; m++) {
     // Overlap between this calendar month [m, m+1) and the phase window [winStart, winEnd)
     var segStart = Math.max(m, winStart);
@@ -717,8 +769,9 @@ function spreadHoursIntoMonthly(totalHrs, durWks, startWk, endWk, deliveryAbsMo,
     if (overlap <= 0) continue;
 
     var hrs = hrsPerMonth * overlap;
-    if (m >= 0 && m < nMo && m < deliveryAbsMo) monthly[m] += hrs;
+    if (m >= 0 && m < nMo && m < deliveryAbsMo){monthly[m] += hrs;allocated+=hrs;}
   }
+  return allocated;
 }
 
 /**
@@ -727,20 +780,21 @@ function spreadHoursIntoMonthly(totalHrs, durWks, startWk, endWk, deliveryAbsMo,
  *   - idx must be STRICTLY BEFORE deliveryAbsMo (no hours on or after ship date)
  */
 function placeHrsAtMonth(hrs, absMo, monthly, nMo, deliveryAbsMo) {
-  if (hrs <= 0) return;
+  if (hrs <= 0) return 0;
   var idx = Math.floor(absMo + 0.5); // round to nearest month
   // Hard stop: never place hours in the delivery month or later
   if (deliveryAbsMo !== undefined && idx >= deliveryAbsMo) {
     idx = Math.floor(deliveryAbsMo) - 1; // push back one month
   }
-  if (idx >= 0 && idx < nMo) monthly[idx] += hrs;
+  if (idx >= 0 && idx < nMo){monthly[idx] += hrs;return hrs;}
+  return 0;
 }
 
 /**
  * Main spread cache builder — unchanged structure, uses corrected helpers above.
  */
 function buildLTSpreadCache() {
-  var cache = {};
+  var cache = {_byMli:{},_clippedByDept:{},_clippedTotal:0};
   if (!STATE.generated || !leadTimeAdjust || !ltSpreadMode) return cache;
   var nMo = STATE.years.length * 12;
 
@@ -749,17 +803,17 @@ function buildLTSpreadCache() {
     var rwk    = 1 + getRwk(di) / 100;
     var isOff  = STATE.depts[di].type === 'off';
     var monthly = new Array(nMo).fill(0);
+    cache._byMli[di]={};cache._clippedByDept[di]=0;
 
     for (var mi = 0; mi < STATE.mlis.length; mi++) {
+      var mliMonthly=new Array(nMo).fill(0);cache._byMli[di][mi]=mliMonthly;
       var sh = getSH(mi, di);
       if (sh <= 0) continue;
 
       var ltRes = getLTForDept(mi, di, true);
-      if (ltRes.status !== 'ok') continue;
-
-      var phase   = ltRes.phase;
-      var startWk = phase.startWk || 0;
-      var endWk   = phase.endWk   || 0;
+      var phase   = ltRes.status==='ok'?ltRes.phase:null;
+      var startWk = phase?Number(phase.startWk):0;
+      var endWk   = phase?Number(phase.endWk):0;
       var durWks  = startWk - endWk;
 
       for (var yi = 0; yi < STATE.years.length; yi++) {
@@ -773,12 +827,16 @@ function buildLTSpreadCache() {
           // deliveryAbsMo = the calendar month when this batch ships
           var deliveryAbsMo = yi * 12 + mo;
 
-          spreadHoursIntoMonthly(
-            totalHrs, durWks, startWk, endWk,
-            deliveryAbsMo, monthly, nMo
-          );
+          var allocated=0;
+          if(ltRes.status==='ok'){
+            allocated=spreadHoursIntoMonthly(totalHrs,durWks,startWk,endWk,deliveryAbsMo,mliMonthly,nMo);
+          }else if(deliveryAbsMo>=0&&deliveryAbsMo<nMo){
+            mliMonthly[deliveryAbsMo]+=totalHrs;allocated=totalHrs;
+          }
+          var clipped=Math.max(0,totalHrs-allocated);cache._clippedByDept[di]+=clipped;cache._clippedTotal+=clipped;
         }
       }
+      for(var abs=0;abs<nMo;abs++)monthly[abs]+=mliMonthly[abs];
     }
     cache[di] = monthly;
   }
@@ -789,11 +847,42 @@ function getSpreadHoursMonthlyAbs(di,absMo){
   var d=LT_SPREAD_CACHE[di];if(!d||absMo<0||absMo>=d.length)return 0;
   return d[absMo];
 }
+function getSpreadHoursMonthlyAbsForMli(di,mi,absMo){
+  if(!LT_SPREAD_CACHE)LT_SPREAD_CACHE=buildLTSpreadCache();
+  var byDept=LT_SPREAD_CACHE._byMli&&LT_SPREAD_CACHE._byMli[di],d=byDept&&byDept[mi];if(!d||absMo<0||absMo>=d.length)return 0;
+  return d[absMo];
+}
+function getSpreadLoadForMli(di,mi,yi,pi){
+  if(pi===undefined)return(function(){var tot=0;for(var m=0;m<12;m++)tot+=getSpreadHoursMonthlyAbsForMli(di,mi,yi*12+m);return tot;})();
+  if(RESOLUTION==='monthly')return getSpreadHoursMonthlyAbsForMli(di,mi,yi*12+pi);
+  if(RESOLUTION==='quarterly'){var tot=0;for(var m=pi*3;m<pi*3+3;m++)tot+=getSpreadHoursMonthlyAbsForMli(di,mi,yi*12+m);return tot;}
+  var tot=0;for(var m=0;m<12;m++)tot+=getSpreadHoursMonthlyAbsForMli(di,mi,yi*12+m);return tot;
+}
+function getSpreadClippedHours(){if(!LT_SPREAD_CACHE)LT_SPREAD_CACHE=buildLTSpreadCache();return LT_SPREAD_CACHE._clippedTotal||0;}
+function getLTClippedHours(){
+  if(!STATE.generated||!leadTimeAdjust)return 0;
+  if(ltSpreadMode)return getSpreadClippedHours();
+  var clipped=0;
+  for(var di=0;di<STATE.depts.length;di++){
+    if(STATE.depts[di].type==='wh')continue;
+    var rwk=1+getRwk(di)/100,isOff=STATE.depts[di].type==='off';
+    for(var mi=0;mi<STATE.mlis.length;mi++){
+      var sh=getSH(mi,di),ltRes=getLTForDept(mi,di,true);if(sh<=0||ltRes.status!=='ok')continue;
+      var monthsBack=Math.round(ltRes.shiftWks/LT_SPREAD_MO_WKS);
+      for(var yi=0;yi<STATE.years.length;yi++)for(var mo=0;mo<12;mo++){
+        var dem=getDemMonthly(mi,yi,mo);if(dem<=0)continue;
+        if(yi*12+mo-monthsBack<0)clipped+=dem*sh*rwk*(isOff?getCF(mi,di):1);
+      }
+    }
+  }
+  return clipped;
+}
 function getSpreadLoadAnnual(di,yi){
   var tot=0;for(var mo=0;mo<12;mo++)tot+=getSpreadHoursMonthlyAbs(di,yi*12+mo);
   return tot;
 }
 function getSpreadLoad(di,yi,pi){
+  if(pi===undefined)return getSpreadLoadAnnual(di,yi);
   if(RESOLUTION==='monthly')return getSpreadHoursMonthlyAbs(di,yi*12+pi);
   if(RESOLUTION==='quarterly'){var tot=0;for(var m=pi*3;m<pi*3+3;m++)tot+=getSpreadHoursMonthlyAbs(di,yi*12+m);return tot;}
   return getSpreadLoadAnnual(di,yi);
@@ -805,7 +894,7 @@ function ltSummaryStr(){
   for(var mi=0;mi<STATE.mlis.length;mi++){
     var phases=getPhases(mi);if(phases.length===0)continue;
     var maxSW=0;for(var p=0;p<phases.length;p++)if(phases[p].startWk>maxSW)maxSW=phases[p].startWk;
-    if(maxSW>0)parts.push(STATE.mlis[mi].code+': '+maxSW+'wks');
+    if(maxSW>0)parts.push(escH(STATE.mlis[mi].code)+': '+maxSW+'wks');
   }
   return parts.join(' | ');
 }
@@ -813,64 +902,30 @@ function ltSummaryStr(){
 function ltAdjBanner(){
   if(!leadTimeAdjust)return'';
   var errCount=getLTErrCount();
-  var errNote=errCount>0?' <span class="lt-err-badge">'+errCount+' unassigned</span>':'';
+  var errNote=errCount>0?' <span class="lt-err-badge">'+errCount+' invalid/unassigned</span>':'';
   var s=ltSummaryStr();
   return'<div class="infobox ib-lt"><b>&#9203; Lead Time Adjust is ON.</b> Capacity demand is shifted earlier per dept phase assignments.'+errNote+(s?'<br><span style="font-size:11px">Max LT by MLI: '+s+'</span>':'')+'</div>';
 }
 
 function getDemAdjustedForDept(mi, di, yi) {
-    if (!leadTimeAdjust) return getDem(mi, yi);
-    var shiftWks = getShiftWks(mi, di);
-    if (shiftWks === 0) return getDem(mi, yi);
-
-    // Convert shift to fractional years
-    var ltFrac = shiftWks / 52;
-    var fullYrsBack = Math.floor(ltFrac);
-    var fracBack = ltFrac - fullYrsBack;  // e.g. 2wks → fracBack=0.038
-
-    // Only bleed into adjacent year if the fractional part is significant
-    // AND we're in a period close enough to the boundary to cross it.
-    // For annual buckets: only shift full years. Sub-year remainder
-    // stays in the same annual bucket unless it truly crosses Jan 1.
-    // Simple conservative approach: round to nearest whole year.
-    var totalYrsBack = Math.round(ltFrac);  // 2wks → 0 yrs back
-    var srcYr = yi + totalYrsBack;
-
-    if (srcYr < STATE.years.length) return getDem(mi, srcYr);
-    return 0;
+  return getDemAnnualAdjustedForDept(mi,di,yi);
 }
 
-function getDemPeriodAdjustedForDept(mi, di, yi, pi) {
-    if (!leadTimeAdjust) return getDemPeriod(mi, yi, pi);
-    var shiftWks = getShiftWks(mi, di);
-    if (shiftWks === 0) return getDemPeriod(mi, yi, pi);
-
-    var pc = getPeriodCount();
-    // Weeks per period
-    var periodWks = RESOLUTION === 'quarterly' ? 13 : (52 / 12);
-    
-    // Whole periods to shift back (no fractional bleed)
-    var periodsBack = Math.round(shiftWks / periodWks);
-
-    var absIdx = yi * pc + pi;
-    var srcIdx = absIdx + periodsBack;
-
-    var srcYi = Math.floor(srcIdx / pc);
-    var srcPi = srcIdx % pc;
-
-    if (srcYi < STATE.years.length) return getDemPeriod(mi, srcYi, srcPi);
-    return 0;
+function getDemMonthlyAdjustedForDept(mi,di,yi,mo){
+  if(!leadTimeAdjust)return getDemMonthly(mi,yi,mo);
+  var shiftWks=getShiftWks(mi,di);if(shiftWks<=0)return getDemMonthly(mi,yi,mo);
+  var monthsBack=Math.round(shiftWks/LT_SPREAD_MO_WKS);
+  var srcAbs=yi*12+mo+monthsBack;
+  if(srcAbs<0||srcAbs>=STATE.years.length*12)return 0;
+  return getDemMonthly(mi,Math.floor(srcAbs/12),srcAbs%12);
+}
+function getDemPeriodAdjustedForDept(mi,di,yi,pi){
+  if(RESOLUTION==='monthly')return getDemMonthlyAdjustedForDept(mi,di,yi,pi);
+  if(RESOLUTION==='quarterly'){var tot=0;for(var m=0;m<3;m++)tot+=getDemMonthlyAdjustedForDept(mi,di,yi,pi*3+m);return tot;}
+  return getDemAnnualAdjustedForDept(mi,di,yi);
 }
 function getDemAnnualAdjustedForDept(mi, di, yi) {
-    if (!leadTimeAdjust) return getDemAnnual(mi, yi);
-    var shiftWks = getShiftWks(mi, di);
-    if (shiftWks === 0) return getDemAnnual(mi, yi);
-
-    var totalYrsBack = Math.round(shiftWks / 52);
-    var srcYr = yi + totalYrsBack;
-
-    if (srcYr < STATE.years.length) return getDemAnnual(mi, srcYr);
-    return 0;
+  var tot=0;for(var mo=0;mo<12;mo++)tot+=getDemMonthlyAdjustedForDept(mi,di,yi,mo);return tot;
 }
 
 function getLTStartLabel(mi,yi){
@@ -885,10 +940,13 @@ function getLTStartLabel(mi,yi){
 // ─────────────────────────────────────────────────────────────────────────────
 // OEE / EFFICIENCY
 // ─────────────────────────────────────────────────────────────────────────────
-function getOEE(di){var a=gv('oee_a_d'+di),p=gv('oee_p_d'+di),q=gv('oee_q_d'+di);if(a>0&&p>0&&q>0)return(a/100)*(p/100)*(q/100)*100;return null;}
-function getEfficiency(di){var oee=getOEE(di);if(oee!==null)return oee;return Math.max(0,100-gv('eff_hol_d'+di)-gv('eff_pdt_d'+di)-gv('eff_udt_d'+di)-gv('eff_trn_d'+di));}
+function getOEE(di){
+  var av=sv('oee_a_d'+di),pv=sv('oee_p_d'+di),qv=sv('oee_q_d'+di);if(av===''||pv===''||qv==='')return null;
+  var a=clampNum(av,0,100,0),p=clampNum(pv,0,100,0),q=clampNum(qv,0,100,0);return(a/100)*(p/100)*(q/100)*100;
+}
+function getEfficiency(di){var oee=getOEE(di);if(oee!==null)return clampNum(oee,0,100,0);return clampNum(100-clampNum(gv('eff_hol_d'+di),0,100,0)-clampNum(gv('eff_pdt_d'+di),0,100,0)-clampNum(gv('eff_udt_d'+di),0,100,0)-clampNum(gv('eff_trn_d'+di),0,100,0),0,100,0);}
 function getBaseCap(di){return gv('cap_d'+di);}
-function getRwk(di){return gv('eff_rwk_d'+di);}
+function getRwk(di){return clampNum(gv('eff_rwk_d'+di),0,100,0);}
 function getDemCapActive(di){return gv('demcap_hrs_d'+di)>0;}
 function getNetAvail(di){var dh=gv('demcap_hrs_d'+di);if(dh>0)return dh;var base=getBaseCap(di);return base*getEfficiency(di)/100;}
 function getCapSource(di){return getDemCapActive(di)?'[D]':'[T]';}
@@ -896,7 +954,7 @@ function updateOEECalc(di){
   var oee=getOEE(di),el=document.getElementById('oee_result_d'+di);if(!el)return;
   if(oee!==null){el.textContent='OEE = '+oee.toFixed(1)+'%  '+(oee>=85?'OK':oee>=70?'Acceptable':'Below benchmark');el.className='oee-calc'+(oee>=85?'':oee>=70?' mid':' warn');}
   else{el.textContent='Enter A, P, Q to calculate OEE';el.className='oee-calc mid';}
-  recalc();autoSave();
+  scheduleRecalc();autoSave();
 }
 function toggleOEE(di){var b=document.getElementById('oee_block_d'+di),btn=document.getElementById('oee_btn_d'+di);if(!b||!btn)return;if(b.classList.contains('open')){b.classList.remove('open');btn.textContent='Add OEE (Optional)';}else{b.classList.add('open');btn.textContent='Hide OEE';}}
 function toggleDemCap(di){var b=document.getElementById('demcap_block_d'+di),btn=document.getElementById('demcap_btn_d'+di);if(!b||!btn)return;if(b.classList.contains('open')){b.classList.remove('open');btn.textContent='Add Demonstrated Capacity (Optional)';}else{b.classList.add('open');btn.textContent='Hide Demonstrated Capacity';}}
@@ -904,7 +962,7 @@ function updateDemCapVariance(di){
   var th=getBaseCap(di)*getEfficiency(di)/100,dm=gv('demcap_hrs_d'+di),el=document.getElementById('demcap_var_d'+di);if(!el)return;
   if(th>0&&dm>0){var v=(dm-th)/th*100;el.textContent=(v>=0?'+':'')+v.toFixed(1)+'% vs theoretical';el.className='var-flag '+(v<-15?'var-warn':'var-ok');}
   else{el.textContent='--';el.className='var-flag';}
-  recalc();autoSave();
+  scheduleRecalc();autoSave();
 }
 function updateDemCapTheoreticals(){
   for(var i=0;i<STATE.depts.length;i++){
@@ -930,15 +988,16 @@ function hasSubAnnualData(res){
 function getSH(mi,di){return gv('sh_m'+mi+'_d'+di);}
 function getSF(mi,di){return gv('sf_m'+mi+'_d'+di);}
 function getDW(mi,di){return gv('dw_m'+mi+'_d'+di);}
-function getWorkDays(){return gv('fp_wdays')||250;}
-function getPLF(){return gv('fp_plf')||1.2;}
-function getCF(mi,di){if(STATE.depts[di]&&STATE.depts[di].type!=='off')return 1;var v=gv('cf_m'+mi+'_d'+di);return v>0?v/100:1;}
+function getWorkDays(){return clampNum(sv('fp_wdays'),200,365,250);}
+function getPLF(){return clampNum(sv('fp_plf'),1,3,1.2);}
+function getCF(mi,di){if(STATE.depts[di]&&STATE.depts[di].type!=='off')return 1;var raw=sv('cf_m'+mi+'_d'+di);if(raw==='')return 1;return clampNum(raw,1,100,100)/100;}
 
 function redistributeAllAnnual(){
   var res=null;
   if(hasSubAnnualData('monthly'))res='monthly';
   else if(hasSubAnnualData('quarterly'))res='quarterly';
   if(!res)return;
+  if(!confirm('Redistribute every annual forecast evenly across '+(res==='monthly'?'months':'quarters')+'? This will overwrite the current '+res+' schedule.'))return;
   var pc=res==='quarterly'?4:12;
   for(var i=0;i<STATE.mlis.length;i++){
     for(var y=0;y<STATE.years.length;y++){
@@ -950,7 +1009,7 @@ function redistributeAllAnnual(){
   if(res==='monthly')syncMonthlyToQuarterly();
   updateSubAnnualTotals(res);recalc();autoSave();
 }
-function onAnnualInput(){recalc();autoSave();}
+function onAnnualInput(){scheduleRecalc();autoSave();}
 function syncSubAnnualToAnnual(){
   if(RESOLUTION==='annual')return;
   if(RESOLUTION==='monthly')syncMonthlyToQuarterly();
@@ -964,15 +1023,23 @@ function syncSubAnnualToAnnual(){
     }
   }
 }
-function syncMonthlyToQuarterly(){
-  for(var i=0;i<STATE.mlis.length;i++)for(var y=0;y<STATE.years.length;y++)for(var q=0;q<4;q++){
-    var qTot=0;for(var m=0;m<3;m++)qTot+=gv('d_m'+i+'_y'+y+'_p'+(q*3+m)+'_monthly');
-    var qEl=document.getElementById('d_m'+i+'_y'+y+'_p'+q+'_quarterly');if(qEl&&qTot>0)qEl.value=qTot;
+function syncSubAnnualRowToAnnual(res,mi,yi){
+  var pc=res==='monthly'?12:4,tot=0;for(var p=0;p<pc;p++)tot+=gv('d_m'+mi+'_y'+yi+'_p'+p+'_'+res);
+  var inp=document.getElementById('d_m'+mi+'_y'+yi);if(inp)inp.value=tot;
+}
+function syncMonthlyToQuarterly(onlyMi,onlyYi,force){
+  for(var i=0;i<STATE.mlis.length;i++)for(var y=0;y<STATE.years.length;y++){
+    if(onlyMi!==undefined&&(i!==onlyMi||y!==onlyYi))continue;
+    if(!force&&!hasMonthlyDataFor(i,y))continue;
+    for(var q=0;q<4;q++){
+      var qTot=0;for(var m=0;m<3;m++)qTot+=gv('d_m'+i+'_y'+y+'_p'+(q*3+m)+'_monthly');
+      var qEl=document.getElementById('d_m'+i+'_y'+y+'_p'+q+'_quarterly');if(qEl)qEl.value=qTot>0?qTot:'';
+    }
   }
 }
 function getDem(mi,yi){
-  if(RESOLUTION==='annual')return gv('d_m'+mi+'_y'+yi);
-  var pc=getPeriodCount(),tot=0;for(var p=0;p<pc;p++)tot+=gv('d_m'+mi+'_y'+yi+'_p'+p+'_'+RESOLUTION);return tot;
+  if(RESOLUTION==='annual')return getDemAnnual(mi,yi);
+  var pc=getPeriodCount(),tot=0;for(var p=0;p<pc;p++)tot+=getDemPeriod(mi,yi,p);return tot;
 }
 function hasMonthlyDataFor(mi,yi){
   for(var p=0;p<12;p++)if(gv('d_m'+mi+'_y'+yi+'_p'+p+'_monthly')>0)return true;
@@ -995,7 +1062,16 @@ function getDemMonthly(mi,yi,mo){
   if(hasQuarterlyDataFor(mi,yi)){var qi=Math.floor(mo/3);return gv('d_m'+mi+'_y'+yi+'_p'+qi+'_quarterly')/3;}
   return gv('d_m'+mi+'_y'+yi)/12;
 }
-function getDemPeriod(mi,yi,pi){return gv('d_m'+mi+'_y'+yi+'_p'+pi+'_'+RESOLUTION);}
+function getDemQuarterly(mi,yi,qi){
+  if(hasMonthlyDataFor(mi,yi)){var tot=0;for(var m=0;m<3;m++)tot+=gv('d_m'+mi+'_y'+yi+'_p'+(qi*3+m)+'_monthly');return tot;}
+  if(hasQuarterlyDataFor(mi,yi))return gv('d_m'+mi+'_y'+yi+'_p'+qi+'_quarterly');
+  return gv('d_m'+mi+'_y'+yi)/4;
+}
+function getDemPeriod(mi,yi,pi){
+  if(RESOLUTION==='monthly')return getDemMonthly(mi,yi,pi);
+  if(RESOLUTION==='quarterly')return getDemQuarterly(mi,yi,pi);
+  return getDemAnnual(mi,yi);
+}
 function fmtD(n){if(n===null||n===undefined||isNaN(n))return'--';var rounded=Math.round(n*10)/10;return rounded.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:1});}
 function toggleYrBlock(key){var b=document.getElementById('yr_block_body_'+key),l=document.getElementById('yr_block_toggle_'+key);if(!b||!l)return;if(b.classList.contains('open')){b.classList.remove('open');l.textContent='Expand';}else{b.classList.add('open');l.textContent='Collapse';}}
 function clearAllDemand(){if(!confirm('Clear ALL demand data?'))return;for(var i=0;i<STATE.mlis.length;i++){for(var y=0;y<STATE.years.length;y++){var el=document.getElementById('d_m'+i+'_y'+y);if(el)el.value='';for(var p=0;p<4;p++){var qe=document.getElementById('d_m'+i+'_y'+y+'_p'+p+'_quarterly');if(qe)qe.value='';}for(var p=0;p<12;p++){var me=document.getElementById('d_m'+i+'_y'+y+'_p'+p+'_monthly');if(me)me.value='';}}}recalc();autoSave();}
@@ -1049,10 +1125,18 @@ function applyDemandResolutionView(){
   if(redistBtn){var hasAny=hasSubAnnualData('quarterly')||hasSubAnnualData('monthly');redistBtn.style.display=hasAny?'':'none';}
   if(isSub)syncSubAnnualToAnnual();
 }
-function distributeAnnual(res){
+function hasMissingSubAnnualRows(res){
+  for(var i=0;i<STATE.mlis.length;i++)for(var y=0;y<STATE.years.length;y++)if(gv('d_m'+i+'_y'+y)>0){
+    if(res==='monthly'&&!hasMonthlyDataFor(i,y))return true;
+    if(res==='quarterly'&&!hasQuarterlyDataFor(i,y))return true;
+  }
+  return false;
+}
+function distributeAnnual(res,onlyMissing){
   var pc=res==='quarterly'?4:12;
   for(var i=0;i<STATE.mlis.length;i++){
     for(var y=0;y<STATE.years.length;y++){
+      if(onlyMissing&&((res==='monthly'&&hasMonthlyDataFor(i,y))||(res==='quarterly'&&hasQuarterlyDataFor(i,y))))continue;
       var ann=gv('d_m'+i+'_y'+y);if(ann>0){var distributed=0;for(var p=0;p<pc;p++){var el=document.getElementById('d_m'+i+'_y'+y+'_p'+p+'_'+res);if(el){var target=ann*(p+1)/pc;el.value=target-distributed;distributed=target;}}}
     }
   }
@@ -1062,11 +1146,18 @@ function setResolution(res){
   if(res!=='annual'&&RESOLUTION==='annual'){
     var hasAnnual=false;
     for(var i=0;i<STATE.mlis.length;i++)for(var y=0;y<STATE.years.length;y++)if(gv('d_m'+i+'_y'+y)>0){hasAnnual=true;break;}
-    if(hasAnnual&&!hasSubAnnualData(res)){if(confirm('Distribute annual demand evenly across '+(res==='quarterly'?'quarters':'months')+'?'))distributeAnnual(res);}
+    if(hasAnnual&&hasMissingSubAnnualRows(res)){if(confirm('Some product-years only have annual demand. Populate their '+(res==='quarterly'?'quarters':'months')+' evenly? Existing sub-annual schedules will be preserved.'))distributeAnnual(res,true);}
   }
   RESOLUTION=res;applyDemandResolutionView();rebuildAllResBars();recalc();autoSave();
 }
-function onSubAnnualInput(res){updateSubAnnualTotals(res);if(res==='monthly')syncMonthlyToQuarterly();syncSubAnnualToAnnual();recalc();}
+function onSubAnnualInput(res,el){
+  updateSubAnnualTotals(res);
+  var rowMatch=el&&el.id?el.id.match(/^d_m(\d+)_y(\d+)_p\d+_(monthly|quarterly)$/):null;
+  if(res==='monthly'){
+    if(rowMatch)syncMonthlyToQuarterly(parseInt(rowMatch[1]),parseInt(rowMatch[2]),true);else syncMonthlyToQuarterly();
+  }
+  if(rowMatch)syncSubAnnualRowToAnnual(res,parseInt(rowMatch[1]),parseInt(rowMatch[2]));else syncSubAnnualToAnnual();scheduleRecalc();
+}
 function updateSubAnnualTotals(res){
   // NOTE: These totals always show SHIP-DATE quantities (raw input values).
   // LT-adjusted demand is shown only on capacity tabs (Utilisation, Gap Chart, etc.)
@@ -1099,7 +1190,7 @@ function buildResBar(cid,inputMode){
     var spBtnTxt=ltSpreadMode?'\u2194 Spread: ON':'\u2194 Spread: OFF';
     html+='<button class="'+spBtnCls+'" onclick="toggleLTSpreadMode()" title="Spread each delivery\'s hours evenly across its full phase duration instead of placing them all in one period"'+(leadTimeAdjust?'':' disabled')+'>'+spBtnTxt+'</button>';
     var errCount=getLTErrCount();
-    if(leadTimeAdjust&&errCount>0)html+='<span class="lt-err-badge" style="margin-left:4px">'+errCount+' unassigned</span>';
+    if(leadTimeAdjust&&errCount>0)html+='<span class="lt-err-badge" style="margin-left:4px">'+errCount+' invalid/unassigned</span>';
     if(leadTimeAdjust&&hasPhases&&errCount===0){var s=ltSummaryStr();if(s)html+='<span style="font-size:10px;color:#d6bcfa;margin-left:4px">'+s+'</span>';}
   }
   html+=note+'</div>';
@@ -1150,7 +1241,7 @@ function buildSubAnnualTables(res,periods){
     for(var i=0;i<M.length;i++){
       var phases=getPhases(i),maxSW=0;for(var p2=0;p2<phases.length;p2++)if(phases[p2].startWk>maxSW)maxSW=phases[p2].startWk;
       html+='<tr'+(maxSW>0?' class="lt-adj-row"':'')+'><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+mliColor(i)+';margin-right:4px"></span><strong>'+escH(M[i].code)+'</strong>'+(maxSW>0?'<span class="lt-pill">'+maxSW+'w</span>':'')+'</td>';
-      for(var p=0;p<pc;p++)html+='<td style="padding:3px 5px"><input class="ni" type="number" id="d_m'+i+'_y'+y+'_p'+p+'_'+res+'" value="0" min="0" step="any" oninput="onSubAnnualInput(\''+res+'\');autoSave()" style="min-width:55px"></td>';
+      for(var p=0;p<pc;p++)html+='<td style="padding:3px 5px"><input class="ni" type="number" id="d_m'+i+'_y'+y+'_p'+p+'_'+res+'" value="0" min="0" step="any" oninput="onSubAnnualInput(\''+res+'\',this);autoSave()" style="min-width:55px"></td>';
       html+='<td class="r period-total"><span class="cv" id="d_sub_tot_'+res+'_m'+i+'_y'+y+'">0</span></td></tr>';
     }
     html+='<tr style="background:#2d3748;color:white;font-weight:700"><td>TOTAL (Ship)</td>';
@@ -1164,7 +1255,7 @@ function renderP1LTBanner(){
   var el=document.getElementById('lt_p1_err_banner');if(!el||!STATE.generated||!leadTimeAdjust)return;
   var errCount=getLTErrCount();
   if(errCount===0){el.innerHTML='';return;}
-  el.innerHTML='<div class="lt-err-banner"><h4>&#9888; Lead Time Warning &#8212; '+errCount+' unassigned dept/MLI combinations</h4><p style="font-size:11px">These departments show demand at delivery date on capacity tabs.</p><button class="btn btn-lt go-btn" onclick="tab(\'pLT\',document.getElementById(\'nav_pLT\'))">&#8594; Fix on Lead Times Tab</button></div>';
+  el.innerHTML='<div class="lt-err-banner"><h4>&#9888; Lead Time Warning &#8212; '+errCount+' invalid or unassigned dept/MLI combinations</h4><p style="font-size:11px">These departments show demand at delivery date on capacity tabs.</p><button class="btn btn-lt go-btn" onclick="tab(\'pLT\',document.getElementById(\'nav_pLT\'))">&#8594; Fix on Lead Times Tab</button></div>';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1216,14 +1307,14 @@ function renderPhaseSection(){
   if(phases.length===0){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#718096;padding:20px">No phases defined. Click <strong>+ Add Phase</strong> to begin.</td></tr>';return;}
   var html='';
   for(var idx=0;idx<phases.length;idx++){
-    var ph=phases[idx];var dur=ph.startWk-ph.endWk;var valid=ph.startWk>ph.endWk&&ph.startWk>0;
+    var ph=phases[idx],pv=validatePhase(ph);var dur=Number(ph.startWk)-Number(ph.endWk);var valid=pv.ok;
     html+='<tr><td style="color:#718096;font-size:11px">'+(idx+1)+'</td>';
     html+='<td><input class="ni" style="width:140px" value="'+escH(ph.name)+'" onchange="updatePhaseField('+mi+','+idx+',\'name\',this.value)"></td>';
     html+='<td><input class="ni" type="number" style="width:80px;text-align:right" value="'+ph.startWk+'" min="1" max="260" onchange="updatePhaseField('+mi+','+idx+',\'startWk\',parseInt(this.value)||0)"></td>';
     html+='<td><input class="ni" type="number" style="width:80px;text-align:right" value="'+ph.endWk+'" min="0" max="260" onchange="updatePhaseField('+mi+','+idx+',\'endWk\',parseInt(this.value)||0)"></td>';
     html+='<td class="r"><span class="tag '+(valid?'tag-b':'tag-r')+'">'+(valid?dur+' wks':'⚠ invalid')+'</span></td>';
-    html+='<td><input type="color" value="'+ph.color+'" style="width:40px;height:28px;border:none;cursor:pointer;border-radius:4px" onchange="updatePhaseField('+mi+','+idx+',\'color\',this.value)"></td>';
-    html+='<td><span class="tag '+(valid?'tag-g':'tag-r')+'">'+(valid?'✓ Valid':'⚠ Start > End')+'</span></td>';
+    html+='<td><input type="color" value="'+safeColor(ph.color)+'" style="width:40px;height:28px;border:none;cursor:pointer;border-radius:4px" onchange="updatePhaseField('+mi+','+idx+',\'color\',this.value)"></td>';
+    html+='<td><span class="tag '+(valid?'tag-g':'tag-r')+'">'+(valid?'✓ Valid':'⚠ '+escH(pv.msg))+'</span></td>';
     html+='<td><button class="del-btn" onclick="removePhase('+mi+','+idx+')">✕</button></td></tr>';
   }
   tb.innerHTML=html;
@@ -1244,6 +1335,9 @@ function removePhase(mi,idx){
 }
 function updatePhaseField(mi,idx,field,val){
   var phases=getPhases(mi);if(!phases[idx])return;
+  if(field==='startWk'||field==='endWk')val=clampNum(val,0,260,0);
+  else if(field==='name')val=cleanText(val,80);
+  else if(field==='color')val=safeColor(val);
   phases[idx][field]=val;ltConfig.phases[mi]=phases;
   renderPhaseSection();renderGanttSection();buildShiftSummary();runLTValidation();updateLTNavBadge();autoSave();
 }
@@ -1261,14 +1355,14 @@ function renderGanttSection(){
   for(var i=0;i<phases.length;i++){
     var ph=phases[i];if(ph.startWk<=0)continue;
     var leftPct=(1-ph.startWk/maxWk)*100;var widthPct=(ph.startWk-ph.endWk)/maxWk*100;if(widthPct<0)widthPct=0;
-    html+='<div class="lt-gantt-row"><div class="lt-gantt-label"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+ph.color+';margin-right:5px"></span>'+escH(ph.name)+'</div>';
-    html+='<div class="lt-gantt-bar-area"><div class="lt-gantt-bar" style="left:'+leftPct.toFixed(1)+'%;width:'+widthPct.toFixed(1)+'%;background:'+ph.color+';opacity:0.85">'+ph.startWk+'→'+ph.endWk+'w</div></div></div>';
+    html+='<div class="lt-gantt-row"><div class="lt-gantt-label"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+safeColor(ph.color)+';margin-right:5px"></span>'+escH(ph.name)+'</div>';
+    html+='<div class="lt-gantt-bar-area"><div class="lt-gantt-bar" style="left:'+leftPct.toFixed(1)+'%;width:'+widthPct.toFixed(1)+'%;background:'+safeColor(ph.color)+';opacity:0.85">'+ph.startWk+'→'+ph.endWk+'w</div></div></div>';
   }
   var overlaps=[];
   for(var a=0;a<phases.length;a++)for(var b2=a+1;b2<phases.length;b2++){
     var pa=phases[a],pb=phases[b2];
     var ovWks=(pa.startWk-pa.endWk)+(pb.startWk-pb.endWk)-(Math.max(pa.startWk,pb.startWk)-Math.min(pa.endWk,pb.endWk));
-    if(ovWks>0)overlaps.push(pa.name+' + '+pb.name+': '+ovWks+' wks');
+    if(ovWks>0)overlaps.push(escH(pa.name)+' + '+escH(pb.name)+': '+ovWks+' wks');
   }
   if(overlaps.length>0)html+='<div class="infobox ib-y" style="margin-top:10px"><b>⚡ Overlapping phases:</b> '+overlaps.join(' | ')+'</div>';
   html+='</div>';wrap.innerHTML=html;
@@ -1280,16 +1374,16 @@ function renderDeptMapSection(){
   for(var di=0;di<STATE.depts.length;di++){
     var d=STATE.depts[di],phaseId=(map[di]!==undefined)?map[di]:'none';
     var phase=null;for(var p=0;p<phases.length;p++)if(phases[p].id===phaseId){phase=phases[p];break;}
-    var isErr=!phase||phaseId==='none';
+    var phaseCheck=validatePhase(phase),isErr=!phase||phaseId==='none'||!phaseCheck.ok;
     html+='<tr class="'+(isErr?'row-lt-err':d.type==='off'?'row-off':d.type==='wh'?'row-wh':'row-prod')+'">';
     html+='<td><strong>'+deptIcon(d.type)+escH(d.name)+'</strong></td>';
     html+='<td>'+typeLabel(d.type)+'</td>';
     html+='<td><select class="ni'+(isErr?' err-input':'')+'" style="width:210px" onchange="assignDeptPhase('+mi+','+di+',this.value)">';
     html+='<option value="none"'+(phaseId==='none'?' selected':'')+'>-- Not Assigned --</option>';
-    for(var p=0;p<phases.length;p++){var ph=phases[p];html+='<option value="'+ph.id+'"'+(phaseId===ph.id?' selected':'')+'>'+escH(ph.name)+' (↑'+ph.startWk+'wks)</option>';}
+    for(var p=0;p<phases.length;p++){var ph=phases[p];html+='<option value="'+escH(ph.id)+'"'+(phaseId===ph.id?' selected':'')+'>'+escH(ph.name)+' (↑'+ph.startWk+'wks)</option>';}
     html+='</select></td>';
     html+='<td class="r">'+(isErr?'<span class="lt-shift-none">—</span>':'<span class="lt-shift-ok">−'+phase.startWk+' wks</span>')+'</td>';
-    html+='<td>'+(isErr?'<span class="tag tag-r">⚠ No phase assigned</span>':'<span class="tag tag-g">✓ '+escH(phase.name)+'</span>')+'</td>';
+    html+='<td>'+(isErr?'<span class="tag tag-r">⚠ '+escH(phaseId==='none'?'No phase assigned':phaseCheck.msg)+'</span>':'<span class="tag tag-g">✓ '+escH(phase.name)+'</span>')+'</td>';
     html+='</tr>';
   }
   tb.innerHTML=html;
@@ -1367,7 +1461,9 @@ function renderLTGlobalBanner(){
   var errCount=getLTErrCount();
   if(errCount===0){wrap.innerHTML='<div class="lt-ok-banner">✅ <strong>All departments have valid phase assignments.</strong></div>';return;}
   var errs=[];
+  var prevAdj=leadTimeAdjust;leadTimeAdjust=true;
   for(var mi=0;mi<STATE.mlis.length;mi++)for(var di=0;di<STATE.depts.length;di++){var r=getLTForDept(mi,di,true);if(r.status==='error')errs.push({mliCode:STATE.mlis[mi].code,deptName:STATE.depts[di].name,msg:r.msg});}
+  leadTimeAdjust=prevAdj;
   var html='<div class="lt-err-banner"><h4>⚠ '+errCount+' Lead Time Configuration Error'+(errCount>1?'s':'')+'</h4><ul>';
   errs.forEach(function(e){html+='<li><strong>'+escH(e.mliCode)+'</strong> × '+escH(e.deptName)+' — '+escH(e.msg)+'</li>';});
   html+='</ul></div>';wrap.innerHTML=html;
@@ -1392,7 +1488,7 @@ function restoreRampMilestones(di,saved){
 }
 function getEffBasis(di){
   var eff=getEfficiency(di),oee=getOEE(di),src=getDemCapActive(di)?'Demonstrated':oee!==null?'OEE Active':'Manual';
-  var fteH=STATE.depts[di]&&STATE.depts[di].type==='off'?gv('hc_off')||1800:gv('hc_ops')||1800;
+  var fteH=STATE.depts[di]&&STATE.depts[di].type==='off'?clampNum(sv('hc_off'),100,10000,1800):clampNum(sv('hc_ops'),100,10000,1800);
   return{eff:eff,src:src,fteH:fteH,monthlyCapPerFte:fteH*(eff/100)/12};
 }
 function getRampBaseline(di,metric){
@@ -1407,14 +1503,14 @@ function getRampMilestones(di){
   rows.forEach(function(r){
     var dateEl=document.getElementById(r.id+'_date'),descEl=document.getElementById(r.id+'_desc'),fteEl=document.getElementById(r.id+'_fte'),addEl=document.getElementById(r.id+'_add');
     if(!dateEl)return;
-    ms.push({date:dateEl.value,desc:descEl?descEl.value:'',fte:parseFloat(fteEl?fteEl.value:0)||0,add:parseFloat(addEl?addEl.value:0)||0,id:r.id});
+    ms.push({date:dateEl.value,desc:descEl?descEl.value:'',fte:clampNum(fteEl?fteEl.value:0,0,10000,0),add:clampNum(addEl?addEl.value:0,0,1000000000,0),id:r.id});
   });
   ms.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});return ms;
 }
 function calcMsAdder(di,msRowId){
   var fteEl=document.getElementById(msRowId+'_fte'),addEl=document.getElementById(msRowId+'_add'),ovEl=document.getElementById(msRowId+'_override');
   if(!fteEl||!addEl)return;
-  var fte=parseFloat(fteEl.value)||0,metric=getRampMetric(di),eb=getEffBasis(di),isOverridden=ovEl&&ovEl.checked;
+  var fte=clampNum(fteEl.value,0,10000,0),metric=getRampMetric(di),eb=getEffBasis(di),isOverridden=ovEl&&ovEl.checked;
   if(fte===0&&!isOverridden){addEl.value='';addEl.readOnly=false;addEl.style.background='';var b=document.getElementById(msRowId+'_autobadge');if(b)b.style.display='none';updateRampRunningTotals(di);renderRampChart(di);autoSave();return;}
   if(!isOverridden&&fte>0){
     var annHrs=fte*eb.fteH*(eb.eff/100),monthlyHrs=annHrs/12;
@@ -1442,10 +1538,10 @@ function addRampMilestone(di,date,desc,fte,add,override){
   var metric=getRampMetric(di),addUnit=metric==='hours'?'hrs/mo':metric==='hc'?'FTE':'units/mo';
   var tr=document.createElement('tr');tr.id=id;
   tr.innerHTML='<td style="color:#718096;font-size:10px;text-align:center" id="'+id+'_num"></td>'+
-    '<td><input class="ni" type="month" id="'+id+'_date" value="'+(date||'')+'" style="width:130px" oninput="updateRampRunningTotals('+di+');renderRampChart('+di+');updateRecoveryPlanSummary();autoSave()"></td>'+
-    '<td><input class="ni" type="text" id="'+id+'_desc" value="'+(desc||'')+'" placeholder="Event..." oninput="updateRecoveryPlanSummary();autoSave()"></td>'+
-    '<td><input class="ni" type="number" id="'+id+'_fte" value="'+(fte||'')+'" min="0" step="0.5" placeholder="FTE" style="width:60px;text-align:right" oninput="calcMsAdder('+di+',\''+id+'\')"></td>'+
-    '<td style="position:relative"><input class="ni" type="number" id="'+id+'_add" value="'+(add||'')+'" min="0" step="1" placeholder="'+addUnit+'" style="width:90px;text-align:right" oninput="updateRampRunningTotals('+di+');renderRampChart('+di+');autoSave()">'+
+    '<td><input class="ni" type="month" id="'+id+'_date" value="'+escH(date||'')+'" style="width:130px" oninput="updateRampRunningTotals('+di+');renderRampChart('+di+');updateRecoveryPlanSummary();autoSave()"></td>'+
+    '<td><input class="ni" type="text" id="'+id+'_desc" value="'+escH(desc||'')+'" placeholder="Event..." oninput="updateRecoveryPlanSummary();autoSave()"></td>'+
+    '<td><input class="ni" type="number" id="'+id+'_fte" value="'+escH(fte||'')+'" min="0" step="0.5" placeholder="FTE" style="width:60px;text-align:right" oninput="calcMsAdder('+di+',\''+id+'\')"></td>'+
+    '<td style="position:relative"><input class="ni" type="number" id="'+id+'_add" value="'+escH(add||'')+'" min="0" step="1" placeholder="'+addUnit+'" style="width:90px;text-align:right" oninput="updateRampRunningTotals('+di+');renderRampChart('+di+');autoSave()">'+
     '<span id="'+id+'_autobadge" class="override-flag" style="display:none">AUTO</span>'+
     '<label style="display:block;font-size:9px;color:#718096;margin-top:2px"><input type="checkbox" id="'+id+'_override"'+(override?' checked':'')+' onchange="toggleMsOverride('+di+',\''+id+'\')"> Manual override</label></td>'+
     '<td class="r"><span class="ramp-running-total" id="'+id+'_rt">--</span></td>'+
@@ -1473,49 +1569,18 @@ function getRampDemandSeries(di,metric,nMonths,startYr){
   for(var mo=0;mo<nMonths;mo++){
     var yr=startYr+Math.floor(mo/12),moIdx=mo%12,yi=yr-STATE.startYr,val=0;
     if(yi>=0&&yi<STATE.years.length){
-      if(metric==='hours'){
-        if(leadTimeAdjust&&ltSpreadMode){
-          val=getSpreadHoursMonthlyAbs(di,yi*12+moIdx);
-        }else{
-        var rwk=1+getRwk(di)/100,isOff=STATE.depts[di]&&STATE.depts[di].type==='off';
-        for(var j=0;j<STATE.mlis.length;j++){
-          var demMo=getDemMonthly(j,yi,moIdx);
-          if(leadTimeAdjust){
-            var shiftWks=getShiftWks(j,di);
-            if(shiftWks>0){
-              var wksPerMo=52/12,mosBack=shiftWks/wksPerMo,fullMosBack=Math.floor(mosBack),fracBack=mosBack-fullMosBack;
-              var absMo=yi*12+moIdx,srcAbs=absMo+fullMosBack;
-              var srcYi2=Math.floor(srcAbs/12),srcMo2=srcAbs%12;
-              var srcAbs2=srcAbs+1,srcYi3=Math.floor(srcAbs2/12),srcMo3=srcAbs2%12;
-              demMo=0;
-              if(srcYi2<STATE.years.length)demMo+=getDemMonthly(j,srcYi2,srcMo2)*(1-fracBack);
-              if(fracBack>0&&srcYi3<STATE.years.length)demMo+=getDemMonthly(j,srcYi3,srcMo3)*fracBack;
-            }
-          }
-          val+=demMo*getSH(j,di)*rwk*(isOff?getCF(j,di):1);
-        }
-        }
-      }else if(metric==='hc'){
-        var rwk=1+getRwk(di)/100,isOff=STATE.depts[di]&&STATE.depts[di].type==='off',load=0;
-        for(var j=0;j<STATE.mlis.length;j++)load+=getDemMonthly(j,yi,moIdx)*getSH(j,di)*rwk*(isOff?getCF(j,di):1);
-        var eb=getEffBasis(di);val=eb.fteH>0&&eb.eff>0?load/(eb.fteH*(eb.eff/100)/12):0;
+      var rwk=1+getRwk(di)/100,isOff=STATE.depts[di]&&STATE.depts[di].type==='off',load=0;
+      if(metric==='hours'||metric==='hc'){
+        if(leadTimeAdjust&&ltSpreadMode)load=getSpreadHoursMonthlyAbs(di,yi*12+moIdx);
+        else for(var j=0;j<STATE.mlis.length;j++)load+=getDemMonthlyAdjustedForDept(j,di,yi,moIdx)*getSH(j,di)*rwk*(isOff?getCF(j,di):1);
+        if(metric==='hours')val=load;
+        else{var eb=getEffBasis(di);val=eb.fteH>0&&eb.eff>0?load/(eb.fteH*(eb.eff/100)/12):0;}
       }else{
-        // ── FIX: units mode in ramp chart uses LT-adjusted monthly demand ──
         for(var j=0;j<STATE.mlis.length;j++){
-          var demMo2=getDemMonthly(j,yi,moIdx);
-          if(leadTimeAdjust){
-            var shiftWks2=getShiftWks(j,di);
-            if(shiftWks2>0){
-              var wksPerMo2=52/12,mosBack2=shiftWks2/wksPerMo2,fullMosBack2=Math.floor(mosBack2),fracBack2=mosBack2-fullMosBack2;
-              var absMo2=yi*12+moIdx,srcAbs3=absMo2+fullMosBack2;
-              var srcYi4=Math.floor(srcAbs3/12),srcMo4=srcAbs3%12;
-              var srcAbs4=srcAbs3+1,srcYi5=Math.floor(srcAbs4/12),srcMo5=srcAbs4%12;
-              demMo2=0;
-              if(srcYi4<STATE.years.length)demMo2+=getDemMonthly(j,srcYi4,srcMo4)*(1-fracBack2);
-              if(fracBack2>0&&srcYi5<STATE.years.length)demMo2+=getDemMonthly(j,srcYi5,srcMo5)*fracBack2;
-            }
-          }
-          val+=demMo2;
+          if(leadTimeAdjust&&ltSpreadMode){
+            var sh=getSH(j,di),cf=isOff?getCF(j,di):1,den=sh*rwk*cf;
+            if(den>0)val+=getSpreadHoursMonthlyAbsForMli(di,j,yi*12+moIdx)/den;
+          }else val+=getDemMonthlyAdjustedForDept(j,di,yi,moIdx);
         }
       }
     }
@@ -1578,10 +1643,10 @@ function renderRampDept(di){
   var unit=metric==='hours'?'hrs/mo':metric==='hc'?'FTE':'units/mo',baseline=getRampBaseline(di,metric);
   var html='<div class="ramp-sc-panel">';
   html+='<div><label>Scenario</label><select class="ni" id="ramp_sc_d'+di+'" style="min-width:220px" onchange="onScenarioChange('+di+')">'+scOptHTML(scVal)+'</select></div>';
-  html+='<div><label>Trigger Date</label><input class="ni" type="month" id="ramp_dt_d'+di+'" value="'+(sv('ramp_dt_d'+di)||'')+'" oninput="updateRecoveryPlanSummary();autoSave()"></div>';
-  html+='<div><label>Investment</label><input class="ni" type="text" id="ramp_inv_d'+di+'" value="'+(sv('ramp_inv_d'+di)||'')+'" placeholder="$, people..." style="width:120px" oninput="updateRecoveryPlanSummary();autoSave()"></div>';
-  html+='<div><label>Owner</label><input class="ni" type="text" id="ramp_own_d'+di+'" value="'+(sv('ramp_own_d'+di)||'')+'" placeholder="Owner" style="width:100px" oninput="updateRecoveryPlanSummary();autoSave()"></div>';
-  html+='<div><label>Notes</label><input class="ni" type="text" id="ramp_note_d'+di+'" value="'+(sv('ramp_note_d'+di)||'')+'" placeholder="Notes..." style="width:160px" oninput="autoSave()"></div>';
+  html+='<div><label>Trigger Date</label><input class="ni" type="month" id="ramp_dt_d'+di+'" value="'+escH(sv('ramp_dt_d'+di)||'')+'" oninput="updateRecoveryPlanSummary();autoSave()"></div>';
+  html+='<div><label>Investment</label><input class="ni" type="text" id="ramp_inv_d'+di+'" value="'+escH(sv('ramp_inv_d'+di)||'')+'" placeholder="$, people..." style="width:120px" oninput="updateRecoveryPlanSummary();autoSave()"></div>';
+  html+='<div><label>Owner</label><input class="ni" type="text" id="ramp_own_d'+di+'" value="'+escH(sv('ramp_own_d'+di)||'')+'" placeholder="Owner" style="width:100px" oninput="updateRecoveryPlanSummary();autoSave()"></div>';
+  html+='<div><label>Notes</label><input class="ni" type="text" id="ramp_note_d'+di+'" value="'+escH(sv('ramp_note_d'+di)||'')+'" placeholder="Notes..." style="width:160px" oninput="autoSave()"></div>';
   html+='</div>';
   if(scMult!==null){html+='<div class="ramp-sc-active">Scenario: <strong>'+scVal+'</strong> &times;'+scMult+' &rarr; <strong>'+fmt(Math.round(baseline*scMult*10)/10)+' '+unit+'</strong></div>';}
   else{html+='<div class="ramp-sc-none">No scenario selected &mdash; baseline only.</div>';}
@@ -1638,17 +1703,17 @@ function updateRecoveryPlanSummary(){
     if(hasSc||ms.filter(function(m){return m.date;}).length>0)hasAny=true;
     var msListHtml='<div class="rpa-ms-list">';var msWithDate=ms.filter(function(m){return m.date;});
     if(msWithDate.length===0)msListHtml+='<span style="color:#a0aec0;font-style:italic">No milestones</span>';
-    else msWithDate.forEach(function(m){msListHtml+='<div class="rpa-ms-item">'+m.date+(m.desc?' &mdash; '+m.desc:'')+(m.fte?' (+'+m.fte+' FTE)':'')+'</div>';});
+    else msWithDate.forEach(function(m){msListHtml+='<div class="rpa-ms-item">'+escH(m.date)+(m.desc?' &mdash; '+escH(m.desc):'')+(m.fte?' (+'+m.fte+' FTE)':'')+'</div>';});
     msListHtml+='</div>';
     html+='<tr'+deptRowClass(STATE.depts[i].type)+'>';
     html+='<td><strong>'+deptIcon(STATE.depts[i].type)+escH(STATE.depts[i].name)+'</strong></td>';
     html+='<td>'+(hasSc?'<span class="tag tag-g">'+scVal+'</span>':'<span style="color:#a0aec0;font-style:italic">Not set</span>')+'</td>';
     html+='<td class="r">'+(mult!==null?'<span class="sc-mult-badge">x'+mult+'</span>':'--')+'</td>';
-    html+='<td>'+(dt||'--')+'</td>';
+    html+='<td>'+escH(dt||'--')+'</td>';
     html+='<td class="r">'+(cumFte>0?'<strong>+'+cumFte+' FTE</strong>':'--')+'</td>';
     html+='<td>'+msListHtml+'</td>';
-    html+='<td>'+(inv||'--')+'</td>';
-    html+='<td>'+(own||'--')+'</td>';
+    html+='<td>'+escH(inv||'--')+'</td>';
+    html+='<td>'+escH(own||'--')+'</td>';
     html+='<td>'+(covered?'<span class="tag tag-g">Yes</span>':'<span class="tag tag-r">No</span>')+'</td>';
     html+='</tr>';
   }
@@ -1662,7 +1727,7 @@ function updateRecoveryPlanSummary(){
 // ─────────────────────────────────────────────────────────────────────────────
 function updateHeader(){
   var sup=sv('cfg_supplier');
-  setText('hdr_title',(sup?sup+' \u2014 ':'')+'Capacity & Engineering Workbook v6.74');
+  setText('hdr_title',(sup?sup+' \u2014 ':'')+'Capacity & Engineering Workbook v6.75');
   setText('hdr_sub','Capacity Planning'+(sv('cfg_program')?' | '+sv('cfg_program'):''));
   setText('hdr_date',sv('cfg_date'));setText('hdr_auditor',sv('cfg_auditor')?'Auditor: '+sv('cfg_auditor'):'');
 }
@@ -1685,19 +1750,19 @@ function updateNavDots(){
 function addMLI(name,code,lt,risk){
   var id='mli_'+mliC++;var tb=document.getElementById('mli_tbody');var tr=document.createElement('tr');tr.id=id;
   tr.innerHTML='<td style="color:#718096;font-size:11px" id="'+id+'_num"></td>'+
-    '<td><input class="ni" type="text" id="'+id+'_name" value="'+(name||'')+'" placeholder="Product line name" oninput="autoSave()"></td>'+
-    '<td><input class="ni" type="text" id="'+id+'_code" value="'+(code||'')+'" placeholder="e.g. PROD-A" oninput="autoSave()"></td>'+
+    '<td><input class="ni" type="text" id="'+id+'_name" value="'+escH(name||'')+'" placeholder="Product line name" oninput="autoSave()"></td>'+
+    '<td><input class="ni" type="text" id="'+id+'_code" value="'+escH(code||'')+'" placeholder="e.g. PROD-A" oninput="autoSave()"></td>'+
     '<td><select class="ni" id="'+id+'_risk" onchange="autoSave()"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></td>'+
     '<td><button class="del-btn" onclick="delRow(\''+id+'\')">X</button></td>';
   tb.appendChild(tr);if(risk){var el=document.getElementById(id+'_risk');if(el)el.value=risk;}reNumRows('mli_tbody','_num');
 }
 function addDept(name,type){
   var id='dept_'+deptC++;var tb=document.getElementById('dept_tbody');var tr=document.createElement('tr');tr.id=id;
-  tr.innerHTML='<td style="color:#718096;font-size:11px" id="'+id+'_num"></td><td><input class="ni" type="text" id="'+id+'_name" value="'+(name||'')+'" placeholder="Department name" oninput="autoSave()"></td><td><select class="ni" id="'+id+'_type" onchange="styleDeptRow(\''+id+'\');autoSave()"><option value="prod"'+((!type||type==='prod')?' selected':'')+'>Production</option><option value="off"'+(type==='off'?' selected':'')+'>Office</option><option value="wh"'+(type==='wh'?' selected':'')+'>Warehouse</option></select></td><td><button class="del-btn" onclick="delRow(\''+id+'\')">X</button></td>';
+  tr.innerHTML='<td style="color:#718096;font-size:11px" id="'+id+'_num"></td><td><input class="ni" type="text" id="'+id+'_name" value="'+escH(name||'')+'" placeholder="Department name" oninput="autoSave()"></td><td><select class="ni" id="'+id+'_type" onchange="styleDeptRow(\''+id+'\');autoSave()"><option value="prod"'+((!type||type==='prod')?' selected':'')+'>Production</option><option value="off"'+(type==='off'?' selected':'')+'>Office</option><option value="wh"'+(type==='wh'?' selected':'')+'>Warehouse</option></select></td><td><button class="del-btn" onclick="delRow(\''+id+'\')">X</button></td>';
   tb.appendChild(tr);styleDeptRow(id);reNumRows('dept_tbody','_num');
 }
 function styleDeptRow(id){var tr=document.getElementById(id),sel=document.getElementById(id+'_type');if(!tr||!sel)return;tr.className=sel.value==='off'?'row-off':sel.value==='wh'?'row-wh':'row-prod';}
-function addCLItem(text){var id='cl_cfg_'+clC++;var el=document.getElementById('cl_cfg_list');var div=document.createElement('div');div.id=id;div.style.cssText='display:flex;gap:8px;margin-bottom:6px;align-items:center';div.innerHTML='<input class="ni" type="text" value="'+(text||'')+'" placeholder="Checklist item..." style="flex:1" oninput="autoSave()"><button class="del-btn" onclick="document.getElementById(\''+id+'\').remove();autoSave()">X</button>';el.appendChild(div);}
+function addCLItem(text){var id='cl_cfg_'+clC++;var el=document.getElementById('cl_cfg_list');var div=document.createElement('div');div.id=id;div.style.cssText='display:flex;gap:8px;margin-bottom:6px;align-items:center';div.innerHTML='<input class="ni" type="text" value="'+escH(text||'')+'" placeholder="Checklist item..." style="flex:1" oninput="autoSave()"><button class="del-btn" onclick="document.getElementById(\''+id+'\').remove();autoSave()">X</button>';el.appendChild(div);}
 function delRow(id){var el=document.getElementById(id);if(el)el.remove();reNumRows('mli_tbody','_num');reNumRows('dept_tbody','_num');autoSave();}
 function reNumRows(tbodyId,suffix){document.getElementById(tbodyId).querySelectorAll('tr').forEach(function(r,i){var el=document.getElementById(r.id+suffix);if(el)el.textContent=i+1;});}
 function showWarn(){document.getElementById('warn_box').style.display='block';}
@@ -1717,21 +1782,24 @@ function initSetup(){
 // ─────────────────────────────────────────────────────────────────────────────
 // GENERATE WORKBOOK
 // ─────────────────────────────────────────────────────────────────────────────
-function generateWorkbook(){
+function generateWorkbook(preserveConfig){
+  autosavePaused=false;
   hideWarn();
-  STATE.supplier=sv('cfg_supplier')||'Supplier';STATE.program=sv('cfg_program');STATE.date=sv('cfg_date');STATE.auditor=sv('cfg_auditor');
-  STATE.startYr=parseInt(sv('cfg_start_yr'))||2026;STATE.numYrs=Math.min(Math.max(parseInt(sv('cfg_num_yrs'))||5,2),10);
+  STATE.supplier=cleanText(sv('cfg_supplier')||'Supplier',120);STATE.program=cleanText(sv('cfg_program'),120);STATE.date=cleanText(sv('cfg_date'),80);STATE.auditor=cleanText(sv('cfg_auditor'),120);
+  STATE.startYr=clampNum(parseInt(sv('cfg_start_yr')),2020,2040,2026);STATE.numYrs=clampNum(parseInt(sv('cfg_num_yrs')),2,10,5);
   STATE.years=[];for(var y=0;y<STATE.numYrs;y++)STATE.years.push(STATE.startYr+y);
   STATE.mlis=[];
   document.querySelectorAll('#mli_tbody tr').forEach(function(r){
     var name=document.getElementById(r.id+'_name'),code=document.getElementById(r.id+'_code'),risk=document.getElementById(r.id+'_risk');
-    if(name&&name.value.trim())STATE.mlis.push({name:name.value.trim(),code:(code&&code.value.trim())||name.value.trim().substring(0,6).toUpperCase(),risk:risk?risk.value:'Medium'});
+    if(name&&name.value.trim())STATE.mlis.push({name:cleanText(name.value.trim(),120),code:cleanText((code&&code.value.trim())||name.value.trim().substring(0,6).toUpperCase(),40),risk:risk?risk.value:'Medium'});
   });
   STATE.depts=[];
-  document.querySelectorAll('#dept_tbody tr').forEach(function(r){var n=r.querySelector('input[type=text]'),type=r.querySelector('select');if(n&&n.value.trim())STATE.depts.push({name:n.value.trim(),type:type?type.value:'prod'});});
-  STATE.clItems=[];document.querySelectorAll('#cl_cfg_list div input').forEach(function(el){if(el.value.trim())STATE.clItems.push(el.value.trim());});
+  document.querySelectorAll('#dept_tbody tr').forEach(function(r){var n=r.querySelector('input[type=text]'),type=r.querySelector('select');if(n&&n.value.trim())STATE.depts.push({name:cleanText(n.value.trim(),120),type:type?type.value:'prod'});});
+  STATE.clItems=[];document.querySelectorAll('#cl_cfg_list div input').forEach(function(el){if(el.value.trim())STATE.clItems.push(cleanText(el.value.trim(),200));});
   if(!STATE.mlis.length||!STATE.depts.length){alert('Please add at least one product line and one process step.');return;}
-  STATE.generated=true;RESOLUTION='annual';wfView='summary';rampMetric={};sfVisible=false;dwVisible=false;
+  STATE.generated=true;
+  if(preserveConfig!==true){RESOLUTION='annual';wfView='summary';rampMetric={};sfVisible=false;dwVisible=false;leadTimeAdjust=false;ltSpreadMode=false;ltConfig={phases:{},deptMap:{}};activeLTMli=0;loadYearSel='';loadPeriodSel='';}
+  if(activeLTMli>=STATE.mlis.length)activeLTMli=0;
   // Initialise ltConfig
   for(var mi=0;mi<STATE.mlis.length;mi++){
     if(!ltConfig.phases[mi]){
@@ -1757,7 +1825,7 @@ function generateWorkbook(){
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('on');});
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.getElementById('p1').classList.add('on');
-  document.querySelectorAll('.nav button')[1].classList.add('on');
+  document.getElementById('nav_p1').classList.add('on');
   autoSave();
 }
 function attachAllListeners(){
@@ -1778,7 +1846,7 @@ function buildP2(){
     var d=D[i],isWH=d.type==='wh';
     html+='<tr'+deptRowClass(d.type)+'><td><strong>'+deptIcon(d.type)+escH(d.name)+'</strong> '+typeLabel(d.type)+'</td>';
     if(isWH){html+='<td colspan="3" class="r" style="color:#718096;font-style:italic">Space-driven</td>';}
-    else{html+='<td><input class="ni" type="number" id="fte_d'+i+'" value="" min="0" placeholder="FTE" oninput="fteHelper('+i+');autoSave()" style="text-align:right"></td><td><input class="ni" type="number" id="fteh_d'+i+'" value="1800" min="100" oninput="fteHelper('+i+');autoSave()" style="text-align:right"></td><td><input class="ni" type="number" id="cap_d'+i+'" value="" min="0" placeholder="Hours" oninput="recalc();autoSave()" style="text-align:right"></td>';}
+    else{html+='<td><input class="ni" type="number" id="fte_d'+i+'" value="" min="0" placeholder="FTE" oninput="fteHelper('+i+');autoSave()" style="text-align:right"></td><td><input class="ni" type="number" id="fteh_d'+i+'" value="1800" min="100" oninput="fteHelper('+i+');autoSave()" style="text-align:right"></td><td><input class="ni" type="number" id="cap_d'+i+'" value="" min="0" placeholder="Hours" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';}
     html+='<td><select class="ni" id="con_d'+i+'" onchange="autoSave()">'+conOpts+'</select></td><td><span class="src-badge src-t" id="src_badge_d'+i+'">[T]</span></td><td><input class="ni" type="text" id="cap_note_d'+i+'" placeholder="Notes..." oninput="autoSave()"></td></tr>';
     if(!isWH){
       html+='<tr'+deptRowClass(d.type)+'><td colspan="7" style="padding:4px 9px 10px 9px">';
@@ -1801,7 +1869,7 @@ function buildP3(){
   for(var i=0;i<D.length;i++){
     if(D[i].type==='wh')continue;var isOff=D[i].type==='off';
     html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong>'+(isOff?' <span class="cf-badge">CF%</span>':'')+'</td>';
-    for(var j=0;j<M.length;j++){html+='<td style="padding:3px 6px"><input class="ni" type="number" id="sh_m'+j+'_d'+i+'" value="" min="0" step="0.5" oninput="recalc();autoSave()" style="text-align:right;margin-bottom:2px">';if(isOff)html+='<input class="ni" type="number" id="cf_m'+j+'_d'+i+'" value="100" min="1" max="100" oninput="recalc();autoSave()" style="text-align:right;background:#faf5ff;border-color:#e9d8fd;font-size:11px">';html+='</td>';}
+    for(var j=0;j<M.length;j++){html+='<td style="padding:3px 6px"><input class="ni" type="number" id="sh_m'+j+'_d'+i+'" value="" min="0" step="0.5" oninput="scheduleRecalc();autoSave()" style="text-align:right;margin-bottom:2px">';if(isOff)html+='<input class="ni" type="number" id="cf_m'+j+'_d'+i+'" value="100" min="1" max="100" oninput="scheduleRecalc();autoSave()" style="text-align:right;background:#faf5ff;border-color:#e9d8fd;font-size:11px">';html+='</td>';}
     html+='<td><select class="ni" id="sh_src_d'+i+'" onchange="autoSave()"><option>ERP Routing</option><option>Estimate</option><option>Actual Avg</option><option>Benchmark</option></select></td></tr>';
   }
   html+='</tbody></table></div></div>';
@@ -1809,13 +1877,13 @@ function buildP3(){
   html+='<div id="sfsec"'+(sfVisible?'':' class="hidden"')+'><div class="card pnk"><h2>Sq Ft Per Unit</h2><div class="tbl-wrap"><table><thead><tr><th>Department</th>';
   for(var j=0;j<M.length;j++)html+='<th class="r">'+escH(M[j].code)+'</th>';
   html+='</tr></thead><tbody>';
-  for(var i=0;i<D.length;i++){if(D[i].type==='off')continue;html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td>';for(var j=0;j<M.length;j++)html+='<td><input class="ni" type="number" id="sf_m'+j+'_d'+i+'" value="" min="0" oninput="recalc();autoSave()" style="text-align:right"></td>';html+='</tr>';}
+  for(var i=0;i<D.length;i++){if(D[i].type==='off')continue;html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td>';for(var j=0;j<M.length;j++)html+='<td><input class="ni" type="number" id="sf_m'+j+'_d'+i+'" value="" min="0" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';html+='</tr>';}
   html+='</tbody></table></div></div></div>';
   html+='<button class="sec-btn btn-te" id="dwbtn" onclick="toggleSec(\'dwsec\',\'dwbtn\',\'Dwell Days Per Unit\',\'dwVisible\')">Show Dwell Days Per Unit</button>';
   html+='<div id="dwsec"'+(dwVisible?'':' class="hidden"')+'><div class="card tel"><h2>Dwell Days Per Unit</h2><div class="tbl-wrap"><table><thead><tr><th>Department</th>';
   for(var j=0;j<M.length;j++)html+='<th class="r">'+escH(M[j].code)+'</th>';
   html+='</tr></thead><tbody>';
-  for(var i=0;i<D.length;i++){if(D[i].type==='off')continue;html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td>';for(var j=0;j<M.length;j++)html+='<td><input class="ni" type="number" id="dw_m'+j+'_d'+i+'" value="" min="0" step="0.5" oninput="recalc();autoSave()" style="text-align:right"></td>';html+='</tr>';}
+  for(var i=0;i<D.length;i++){if(D[i].type==='off')continue;html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td>';for(var j=0;j<M.length;j++)html+='<td><input class="ni" type="number" id="dw_m'+j+'_d'+i+'" value="" min="0" step="0.5" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';html+='</tr>';}
   html+='</tbody></table></div></div></div>';
   setHTML('p3_content',html);
   var sfb=document.getElementById('sfbtn');if(sfb)sfb.textContent=(sfVisible?'Hide':'Show')+' Sq Ft Per Unit';
@@ -1830,11 +1898,11 @@ function buildP4(){
     var isOff=d.type==='off',hol=isOff?12:10,pdt=isOff?18:4,udt=isOff?3:5,trn=isOff?4:3,rwk=isOff?15:7;
     html+='<tr'+deptRowClass(d.type)+'><td><strong>'+deptIcon(d.type)+escH(d.name)+'</strong> <span id="oee_active_badge_d'+i+'"></span></td>';
     html+='<td><span class="cv" id="eff_base_d'+i+'">--</span></td>';
-    html+='<td><input class="ni" type="number" id="eff_hol_d'+i+'" value="'+hol+'" min="0" max="100" oninput="recalc();autoSave()" style="text-align:right"></td>';
-    html+='<td><input class="ni" type="number" id="eff_pdt_d'+i+'" value="'+pdt+'" min="0" max="100" oninput="recalc();autoSave()" style="text-align:right"></td>';
-    html+='<td><input class="ni" type="number" id="eff_udt_d'+i+'" value="'+udt+'" min="0" max="100" oninput="recalc();autoSave()" style="text-align:right"></td>';
-    html+='<td><input class="ni" type="number" id="eff_trn_d'+i+'" value="'+trn+'" min="0" max="100" oninput="recalc();autoSave()" style="text-align:right"></td>';
-    html+='<td><input class="ni" type="number" id="eff_rwk_d'+i+'" value="'+rwk+'" min="0" max="100" oninput="recalc();autoSave()" style="text-align:right"></td>';
+    html+='<td><input class="ni" type="number" id="eff_hol_d'+i+'" value="'+hol+'" min="0" max="100" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';
+    html+='<td><input class="ni" type="number" id="eff_pdt_d'+i+'" value="'+pdt+'" min="0" max="100" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';
+    html+='<td><input class="ni" type="number" id="eff_udt_d'+i+'" value="'+udt+'" min="0" max="100" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';
+    html+='<td><input class="ni" type="number" id="eff_trn_d'+i+'" value="'+trn+'" min="0" max="100" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';
+    html+='<td><input class="ni" type="number" id="eff_rwk_d'+i+'" value="'+rwk+'" min="0" max="100" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td>';
     html+='<td><span class="cv" id="eff_net_d'+i+'">--</span></td><td><span class="cv" id="eff_avail_d'+i+'">--</span></td></tr>';
     html+='<tr'+deptRowClass(d.type)+'><td colspan="9" style="padding:4px 9px 10px 9px">';
     html+='<button class="oee-expand-btn" id="oee_btn_d'+i+'" onclick="toggleOEE('+i+')">Add OEE (Optional)</button>';
@@ -1861,7 +1929,9 @@ function renderUtilTable(){
   if(p5banner){
     if(leadTimeAdjust){
       var errs=getLTErrCount();
-      p5banner.innerHTML=errs>0?'<div class="lt-err-banner"><h4>⚠ '+errs+' unassigned dept/MLI combinations — demand at delivery date</h4><button class="btn btn-lt" onclick="tab(\'pLT\',document.getElementById(\'nav_pLT\'))">→ Fix on Lead Times Tab</button></div>':'<div class="lt-ok-banner">✅ All departments have phase assignments. Phase LT adjust active.</div>';
+      var clipped=getLTClippedHours(),bh=errs>0?'<div class="lt-err-banner"><h4>⚠ '+errs+' invalid or unassigned dept/MLI combinations — demand remains at delivery date</h4><button class="btn btn-lt" onclick="tab(\'pLT\',document.getElementById(\'nav_pLT\'))">→ Fix on Lead Times Tab</button></div>':'<div class="lt-ok-banner">✅ All departments have valid phase assignments. Phase LT adjust active.</div>';
+      if(clipped>0)bh+='<div class="infobox ib-y" style="margin-top:8px"><b>⚠ Forecast boundary:</b> '+fmt(Math.round(clipped))+' work hours occur before '+STATE.years[0]+' and are outside the displayed horizon. Start the forecast earlier to include them.</div>';
+      p5banner.innerHTML=bh;
     }else p5banner.innerHTML='';
   }
   var D=STATE.depts,Y=STATE.years,periods=getPeriods(),pc=getPeriodCount(),cols=[];
@@ -1883,11 +1953,16 @@ function renderUtilTable(){
 }
 function renderLoadSelectors(){
   var el=document.getElementById('lc_selectors');if(!el)return;
-  var Y=STATE.years,html='<label style="font-size:12px;font-weight:600">Year:</label><select class="ni" style="width:auto" id="lc_yr" onchange="renderLoad();autoSave()">';
-  for(var y=0;y<Y.length;y++)html+='<option value="'+y+'"'+(y===1?' selected':'')+'>'+Y[y]+'</option>';html+='</select>';
-  if(RESOLUTION!=='annual'){var periods=getPeriods();html+='<label style="font-size:12px;font-weight:600;margin-left:8px">Period:</label><select class="ni" style="width:auto" id="lc_period" onchange="renderLoad();autoSave()"><option value="-1">All (Annual)</option>';for(var p=0;p<periods.length;p++)html+='<option value="'+p+'">'+periods[p]+'</option>';html+='</select>';}
+  var prevYr=sv('lc_yr')||loadYearSel,prevPeriod=sv('lc_period')||loadPeriodSel;
+  var Y=STATE.years,html='<label style="font-size:12px;font-weight:600">Year:</label><select class="ni" style="width:auto" id="lc_yr" onchange="onLoadSelectionChange()">';
+  for(var y=0;y<Y.length;y++)html+='<option value="'+y+'">'+Y[y]+'</option>';html+='</select>';
+  if(RESOLUTION!=='annual'){var periods=getPeriods();html+='<label style="font-size:12px;font-weight:600;margin-left:8px">Period:</label><select class="ni" style="width:auto" id="lc_period" onchange="onLoadSelectionChange()"><option value="-1">All (Annual)</option>';for(var p=0;p<periods.length;p++)html+='<option value="'+p+'">'+periods[p]+'</option>';html+='</select>';}
   el.innerHTML=html;
+  var yrEl=document.getElementById('lc_yr');if(yrEl)yrEl.value=prevYr!==''?prevYr:String(Math.min(1,Y.length-1));
+  var pEl=document.getElementById('lc_period');if(pEl&&prevPeriod!=='')pEl.value=prevPeriod;
+  loadYearSel=sv('lc_yr');loadPeriodSel=sv('lc_period');
 }
+function onLoadSelectionChange(){loadYearSel=sv('lc_yr');loadPeriodSel=sv('lc_period');renderLoad();autoSave();}
 function renderLoad(){
   var tb=document.getElementById('load_tbody');if(!tb)return;
   var yi=parseInt(sv('lc_yr'))||0,piEl=document.getElementById('lc_period'),pi=(piEl&&piEl.value!=='-1')?parseInt(piEl.value):undefined;
@@ -1897,9 +1972,10 @@ function renderLoad(){
     var tot=0;
     html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td>';
     for(var j=0;j<M.length;j++){
-      var dem=(pi!==undefined)?getDemPeriodAdjustedForDept(j,i,yi,pi):getDemAdjustedForDept(j,i,yi);
       var isOff=D[i].type==='off',rwk=1+getRwk(i)/100,cf=isOff?getCF(j,i):1;
-      var load=dem*getSH(j,i)*rwk*cf;
+      var load;
+      if(leadTimeAdjust&&ltSpreadMode)load=getSpreadLoadForMli(i,j,yi,pi);
+      else{var dem=(pi!==undefined)?getDemPeriodAdjustedForDept(j,i,yi,pi):getDemAdjustedForDept(j,i,yi);load=dem*getSH(j,i)*rwk*cf;}
       html+='<td class="r">'+fmt(Math.round(load))+'</td>';tot+=load;
     }
     var annAvail=getNetAvail(i),avail=(pi!==undefined)?getPeriodCap(annAvail):annAvail,util=safeDiv(tot,avail)*100,gap=tot-avail,src=getCapSource(i);
@@ -2012,7 +2088,7 @@ function renderGapChart(){
   }
   if(usedCap>0){var cy=pT+ph-Math.round(usedCap/maxV*ph);svg+='<line x1="'+pL+'" y1="'+cy+'" x2="'+(W-pR)+'" y2="'+cy+'" stroke="#e94560" stroke-width="2" stroke-dasharray="5,3"/><text x="'+(W-pR-2)+'" y="'+(cy-3)+'" text-anchor="end" font-size="9" fill="#e94560" font-weight="700">'+capLabel+'</text>';}
   if(gcMode==='units'&&avgSH===0)svg+='<text x="'+(pL+pw/2)+'" y="'+(pT+ph/2)+'" text-anchor="middle" font-size="11" fill="#a0aec0">Enter Std Hours to show capacity line</text>';
-  if(leadTimeAdjust)svg+='<text x="'+(pL+4)+'" y="'+(pT+12)+'" font-size="9" fill="#6b46c1" font-weight="700">LT-adj: '+STATE.depts[di].name+'</text>';
+  if(leadTimeAdjust)svg+='<text x="'+(pL+4)+'" y="'+(pT+12)+'" font-size="9" fill="#6b46c1" font-weight="700">LT-adj: '+escH(STATE.depts[di].name)+'</text>';
   svg+='</svg>';el.innerHTML=svg;renderGapSummary();
 }
 
@@ -2118,8 +2194,9 @@ function renderWaterfall(){
       var isOff=STATE.depts[di]&&STATE.depts[di].type==='off',rwk=1+getRwk(di)/100;
       for(var j=0;j<STATE.mlis.length;j++){
         var cf=isOff?getCF(j,di):1;
-        var dem=(col.pi!==undefined)?getDemPeriodAdjustedForDept(j,di,col.yi,col.pi):getDemAdjustedForDept(j,di,col.yi);
-        var ml=dem*getSH(j,di)*rwk*cf;
+        var ml;
+        if(leadTimeAdjust&&ltSpreadMode)ml=getSpreadLoadForMli(di,j,col.yi,col.pi);
+        else{var dem=(col.pi!==undefined)?getDemPeriodAdjustedForDept(j,di,col.yi,col.pi):getDemAdjustedForDept(j,di,col.yi);ml=dem*getSH(j,di)*rwk*cf;}
         if(ml<=0)continue;html+=barRow(escH(STATE.mlis[j].code),Math.min(safeDiv(ml,maxB)*100,100),mliColor(j),fmt(Math.round(ml))+' hrs');
       }
       html+='<div style="border-top:1px dashed #e2e8f0;margin-top:4px;padding-top:6px">';
@@ -2138,9 +2215,9 @@ function buildP8(){
   var D=STATE.depts,areaOpts='';for(var i=0;i<D.length;i++){if(D[i].type!=='off')areaOpts+='<option value="'+i+'">'+deptIcon(D[i].type)+escH(D[i].name)+'</option>';}
   var html='<div id="res_output_p8"></div>';
   html+='<div class="g4"><div class="kpi"><div class="v" id="fp_prod_avail">--</div><div class="l">Production Sq Ft</div></div><div class="kpi"><div class="v" id="fp_wh_avail">--</div><div class="l">Warehouse Sq Ft</div></div><div class="kpi" style="border-left:4px solid #d69e2e"><div class="v" id="fp_req_y1">--</div><div class="l">Peak Year Required</div></div><div class="kpi"><div class="v" id="fp_gap_y1">--</div><div class="l">Peak Year Gap</div></div></div>';
-  html+='<div class="card"><h2>Footprint Assumptions</h2><div class="row-params"><div><label>Working Days/Year:</label><input class="ni" type="number" id="fp_wdays" value="250" min="200" max="365" oninput="recalc();autoSave()" style="width:65px;display:inline-block;text-align:right"></div><div><label>Peak Load Factor:</label><input class="ni" type="number" id="fp_plf" value="1.2" min="1" max="3" step="0.05" oninput="recalc();autoSave()" style="width:60px;display:inline-block;text-align:right"></div></div>';
+  html+='<div class="card"><h2>Footprint Assumptions</h2><div class="row-params"><div><label>Working Days/Year:</label><input class="ni" type="number" id="fp_wdays" value="250" min="200" max="365" oninput="scheduleRecalc();autoSave()" style="width:65px;display:inline-block;text-align:right"></div><div><label>Peak Load Factor:</label><input class="ni" type="number" id="fp_plf" value="1.2" min="1" max="3" step="0.05" oninput="scheduleRecalc();autoSave()" style="width:60px;display:inline-block;text-align:right"></div></div>';
   html+='<div class="tbl-wrap"><table><thead><tr><th>Department</th><th>Type</th><th class="r">Available Sq Ft</th><th>Notes</th></tr></thead><tbody>';
-  for(var i=0;i<D.length;i++){if(D[i].type==='off')continue;html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td><td>'+typeLabel(D[i].type)+'</td><td><input class="ni" type="number" id="avail_d'+i+'" value="" min="0" oninput="recalc();autoSave()" style="text-align:right"></td><td><input class="ni" type="text" id="fp_note_d'+i+'" placeholder="Notes..." oninput="autoSave()"></td></tr>';}
+  for(var i=0;i<D.length;i++){if(D[i].type==='off')continue;html+='<tr'+deptRowClass(D[i].type)+'><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td><td>'+typeLabel(D[i].type)+'</td><td><input class="ni" type="number" id="avail_d'+i+'" value="" min="0" oninput="scheduleRecalc();autoSave()" style="text-align:right"></td><td><input class="ni" type="text" id="fp_note_d'+i+'" placeholder="Notes..." oninput="autoSave()"></td></tr>';}
   html+='</tbody></table></div></div>';
   html+='<div class="card pnk"><h2>Footprint Summary</h2><div class="sub">Footprint uses ship-date demand (LT adjust does not affect floor space).</div><div id="fp_summary_bars"></div></div>';
   html+='<div class="card tel"><h2>WIP / Inventory</h2><div class="fl-row"><label style="font-size:12px;font-weight:600">Area:</label><select class="ni" style="width:auto" id="wip_area" onchange="renderWIPTable();autoSave()">'+areaOpts+'</select></div><div id="wip_area_out"></div></div>';
@@ -2211,7 +2288,7 @@ function renderHC(){
   var ltInfo=document.getElementById('hc_lt_info');
   if(ltInfo)ltInfo.style.display=leadTimeAdjust?'block':'none';
   var el=document.getElementById('hc_area');if(!el)return;
-  var fteOps=gv('hc_ops')||1800,fteOff=gv('hc_off')||1800,tgt=(gv('hc_tgt')||85)/100,lead=gv('hc_lead')||90;
+  var fteOps=clampNum(sv('hc_ops'),100,10000,1800),fteOff=clampNum(sv('hc_off'),100,10000,1800),tgt=clampNum(sv('hc_tgt'),50,100,85)/100,lead=clampNum(sv('hc_lead'),0,3650,90);
   var D=STATE.depts,Y=STATE.years,periods=getPeriods(),pc=getPeriodCount(),cols=[];
   if(RESOLUTION==='annual'){for(var y=0;y<Y.length;y++)cols.push({label:String(Y[y]),yi:y,pi:undefined});}
   else{for(var y=0;y<Y.length;y++)for(var p=0;p<pc;p++)cols.push({label:Y[y]+' '+periods[p],yi:y,pi:p});}
@@ -2284,10 +2361,10 @@ function addALRow(action,cat,owner,due,pri,stat){
   var tr=document.createElement('tr');
   tr.innerHTML='<td style="text-align:center;white-space:nowrap;padding:4px 6px"><button style="background:none;border:1px solid #cbd5e0;border-radius:3px;color:#4a5568;cursor:pointer;font-size:11px;padding:1px 5px;display:block;width:100%;margin-bottom:2px" onclick="alMoveRow(this,-1)">Up</button><button style="background:none;border:1px solid #cbd5e0;border-radius:3px;color:#4a5568;cursor:pointer;font-size:11px;padding:1px 5px;display:block;width:100%" onclick="alMoveRow(this,1)">Dn</button></td>'+
     '<td class="al-num" style="color:#718096;font-size:11px;text-align:center"></td>'+
-    '<td><input class="ni" type="text" value="'+(action||'')+'" placeholder="Action item..." style="min-width:200px" oninput="updateAL();autoSave()"></td>'+
+    '<td><input class="ni" type="text" value="'+escH(action||'')+'" placeholder="Action item..." style="min-width:200px" oninput="updateAL();autoSave()"></td>'+
     '<td><select class="ni" onchange="updateAL();autoSave()">'+catO+'</select></td>'+
-    '<td><input class="ni" type="text" value="'+(owner||'')+'" placeholder="Owner" oninput="autoSave()"></td>'+
-    '<td><input class="ni" type="date" value="'+(due||'')+'" onchange="autoSave()"></td>'+
+    '<td><input class="ni" type="text" value="'+escH(owner||'')+'" placeholder="Owner" oninput="autoSave()"></td>'+
+    '<td><input class="ni" type="date" value="'+escH(due||'')+'" onchange="autoSave()"></td>'+
     '<td><select class="ni" onchange="updateAL();autoSave()">'+priO+'</select></td>'+
     '<td><select class="ni" onchange="updateAL();autoSave()">'+stO+'</select></td>'+
     '<td style="text-align:center"><button class="del-btn" onclick="alDelRow(this)">X</button></td>';
@@ -2301,7 +2378,7 @@ function updateAL(){
   rows.forEach(function(r){var sel=r.querySelectorAll('select');if(sel.length>=3){t++;var s=sel[2].value;if(s==='Open')o++;else if(s==='In Progress')p2++;else if(s==='Closed')d++;}});
   setText('al_o',o);setText('al_p',p2);setText('al_d',d);setText('al_t',t);
 }
-function fteHelper(di){var fte=gv('fte_d'+di),hrs=gv('fteh_d'+di)||1800;if(fte>0){var el=document.getElementById('cap_d'+di);if(el){el.value=Math.round(fte*hrs);recalc();}}}
+function fteHelper(di){var fte=gv('fte_d'+di),hrs=gv('fteh_d'+di)||1800;if(fte>0){var el=document.getElementById('cap_d'+di);if(el){el.value=Math.round(fte*hrs);scheduleRecalc();}}}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RECALC
@@ -2332,22 +2409,24 @@ function calcEff(){
   }
   updateDemCapTheoreticals();
 }
+function scheduleRecalc(){if(recalcTimer)clearTimeout(recalcTimer);recalcTimer=setTimeout(function(){recalcTimer=null;recalc();},120);}
 function recalc(){
   if(!STATE.generated)return;
+  if(recalcTimer){clearTimeout(recalcTimer);recalcTimer=null;}
   invalidateLTSpreadCache();
   syncSubAnnualToAnnual();calcDemand();calcEff();
-  renderUtilTable();renderLoad();renderGapChart();renderWaterfall();
-  renderFpSummaryBars();renderWIPTable();renderHC();
-  updateScore();updateAL();updateRecoveryPlanSummary();updateNavDots();
-  for(var i=0;i<STATE.depts.length;i++){
-    if(STATE.depts[i].type==='wh')continue;
-    var body=document.getElementById('ramp_dept_body_d'+i);
-    if(body&&body.classList.contains('open'))renderRampChart(i);
-    renderRampDeptBadge(i);
+  updateScore();updateAL();updateNavDots();rebuildAllResBars();
+  var active=document.querySelector('.pg.on'),activeId=active?active.id:'';
+  if(activeId==='p1')renderP1LTBanner();
+  else if(activeId==='p5'){renderUtilTable();renderLoad();}
+  else if(activeId==='p6')renderGapChart();
+  else if(activeId==='p7'){
+    renderWaterfall();updateRecoveryPlanSummary();
+    for(var i=0;i<STATE.depts.length;i++){if(STATE.depts[i].type==='wh')continue;var body=document.getElementById('ramp_dept_body_d'+i);if(body&&body.classList.contains('open'))renderRampChart(i);renderRampDeptBadge(i);}
   }
-  rebuildAllResBars();renderP1LTBanner();
-  var execPg=document.getElementById('p11');
-  if(execPg&&execPg.classList.contains('on'))renderExecSummary();
+  else if(activeId==='p8'){renderFpSummaryBars();renderWIPTable();}
+  else if(activeId==='p9')renderHC();
+  else if(activeId==='p11')renderExecSummary();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2357,7 +2436,7 @@ function clStatusFromDOM(k){var el=document.getElementById('cl_'+k);if(!el)retur
 function clOwnerFromDOM(k){var el=document.getElementById('cl_own_'+k);return el?el.value||'--':'--';}
 function renderExecSummary(){
   if(!STATE.generated)return;
-  var D=STATE.depts,M=STATE.mlis,Y=STATE.years,tgt=(gv('hc_tgt')||85)/100,hcOps=gv('hc_ops')||1800,hcOff=gv('hc_off')||1800;
+  var D=STATE.depts,M=STATE.mlis,Y=STATE.years,tgt=clampNum(sv('hc_tgt'),50,100,85)/100,hcOps=clampNum(sv('hc_ops'),100,10000,1800),hcOff=clampNum(sv('hc_off'),100,10000,1800);
   setText('ex_footer_l','Capacity Planning \u2014 '+STATE.supplier+(STATE.program?' | '+STATE.program:''));
   setText('ex_footer_r',(STATE.auditor?'Auditor: '+STATE.auditor+' | ':'')+STATE.date);
   var exCapSub=document.getElementById('ex_cap_sub');
@@ -2366,7 +2445,7 @@ function renderExecSummary(){
   if(exLtNote){var errs=getLTErrCount();exLtNote.innerHTML=leadTimeAdjust?'<div class="infobox ib-lt"><b>&#9203; Phase LT Adjust ON.</b> Capacity demand shifted per dept phase assignments.'+(errs>0?' <span class="lt-err-badge">'+errs+' unassigned</span>':'')+'</div>':'';}
   var ltStatus=leadTimeAdjust?'ON \u2014 '+ltSummaryStr():'OFF';
   var snapItems=[{l:'Supplier',v:STATE.supplier},{l:'Program',v:STATE.program},{l:'Audit Date',v:STATE.date},{l:'Auditor',v:STATE.auditor},{l:'Forecast Period',v:Y[0]+' to '+Y[Y.length-1]},{l:'Product Lines',v:M.length+' MLIs'},{l:'Departments',v:D.length},{l:'Forecast Years',v:Y.length},{l:'LT Phase Adjust',v:ltStatus}];
-  var sg='<div class="snap-grid">';snapItems.forEach(function(s){sg+='<div class="snap-item"><div class="sl">'+s.l+'</div><div class="sv'+(s.v?'':' empty')+'">'+(s.v||'Not entered')+'</div></div>';});setHTML('ex_snap_grid',sg+'</div>');
+  var sg='<div class="snap-grid">';snapItems.forEach(function(s){sg+='<div class="snap-item"><div class="sl">'+escH(s.l)+'</div><div class="sv'+(s.v?'':' empty')+'">'+escH(s.v||'Not entered')+'</div></div>';});setHTML('ex_snap_grid',sg+'</div>');
   var demTots=[];for(var y=0;y<Y.length;y++){var t=0;for(var j=0;j<M.length;j++)t+=getDemAnnual(j,y);demTots.push(t);}
   var maxDem=Math.max.apply(null,demTots)||1,peakYrIdx=demTots.indexOf(Math.max.apply(null,demTots));
   var bh='';demTots.forEach(function(v,i){var pct=Math.round(safeDiv(v,maxDem)*100),col=i===peakYrIdx?'#e53e3e':v>demTots[0]*1.5?'#d69e2e':'#4299e1';var yh=i===0?'<span class="dem-yoy flat">Base</span>':(function(){var p2=demTots[i-1],chg=p2>0?Math.round((v-p2)/p2*100):0;return v>p2?'<span class="dem-yoy up">+'+chg+'%</span>':v<p2?'<span class="dem-yoy dn">-'+Math.abs(chg)+'%</span>':'<span class="dem-yoy flat">--</span>';}());bh+='<div class="dem-row"><div class="dem-yr">'+Y[i]+'</div><div class="dem-track"><div class="dem-fill" style="width:'+pct+'%;background:'+col+'">'+(v>0?fmt(v):'')+'</div></div><div class="dem-val">'+fmt(v)+'</div>'+yh+'</div>';});setHTML('ex_demand_bars',bh);
@@ -2404,22 +2483,22 @@ function renderExecSummary(){
     var caps2=getRampCapacitySeries(i,'hours',STATE.years.length*12,STATE.startYr);
     var demand2=getRampDemandSeries(i,'hours',STATE.years.length*12,STATE.startYr);
     for(var mo=0;mo<STATE.years.length*12;mo++){if(demand2[mo]>caps2.recovery[mo])totalDeficit++;}
-    var msSnip=msWithDate.slice(0,3).map(function(m){return m.date+(m.desc?' \u2014 '+m.desc:'');}).join('<br>');
+    var msSnip=msWithDate.slice(0,3).map(function(m){return escH(m.date)+(m.desc?' \u2014 '+escH(m.desc):'');}).join('<br>');
     rpaH+='<tr class="'+(D[i].type==='off'?'row-off':'row-prod')+'">';
     rpaH+='<td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td>';
     rpaH+='<td>'+(hasSc?'<span class="tag tag-g">'+escH(scVal)+'</span>':'<span style="color:#a0aec0">Not set</span>')+'</td>';
     rpaH+='<td class="r">'+(mult!==null?'<span class="sc-mult-badge">x'+mult+'</span>':'--')+'</td>';
-    rpaH+='<td>'+(dt||'--')+'</td>';
+    rpaH+='<td>'+escH(dt||'--')+'</td>';
     rpaH+='<td class="r">'+(cumFte>0?'+'+cumFte+' FTE':'--')+'</td>';
     rpaH+='<td style="font-size:11px;color:#4a5568">'+(msSnip||'<span style="color:#a0aec0">None</span>')+'</td>';
-    rpaH+='<td>'+(own||'--')+'</td>';
+    rpaH+='<td>'+escH(own||'--')+'</td>';
     rpaH+='<td>'+(covered?'<span class="tag tag-g">Yes</span>':'<span class="tag tag-r">No</span>')+'</td>';
     rpaH+='</tr>';
   }
   rpaH+='</tbody></table></div>';
   setHTML('ex_ramp_summary',rpaH);
   setText('ex_kpi_ramp',totalDeficit>0?totalDeficit+'':'OK');setText('ex_kpi_ramp_sub',totalDeficit>0?'dept-months in deficit':'No deficit detected');
-  var clItems=STATE.clItems,ns=0,ip=0,cf=0,clH='';for(var k=0;k<clItems.length;k++){var info=clStatusFromDOM(k),own2=clOwnerFromDOM(k);if(info.confirmed)cf++;else if(info.inProgress)ip++;else ns++;clH+='<tr><td>'+escH(clItems[k])+'</td><td>'+info.tag+'</td><td style="color:#718096">'+own2+'</td></tr>';}
+  var clItems=STATE.clItems,ns=0,ip=0,cf=0,clH='';for(var k=0;k<clItems.length;k++){var info=clStatusFromDOM(k),own2=clOwnerFromDOM(k);if(info.confirmed)cf++;else if(info.inProgress)ip++;else ns++;clH+='<tr><td>'+escH(clItems[k])+'</td><td>'+info.tag+'</td><td style="color:#718096">'+escH(own2)+'</td></tr>';}
   setHTML('ex_cl_tbody',clH||'<tr><td colspan="3" style="color:#a0aec0;text-align:center">No items.</td></tr>');
   var tot=clItems.length,sc2=cf===tot&&tot>0?'green':cf>=tot*0.6?'yellow':'red';
   setHTML('ex_cl_score','<div class="cl-score-big '+sc2+'">'+cf+'/'+tot+'</div><div class="cl-score-detail"><div class="cl-stat cl-cf"><div class="cs-n">'+cf+'</div><div class="cs-l">Confirmed</div></div><div class="cl-stat cl-ip"><div class="cs-n">'+ip+'</div><div class="cs-l">In Progress</div></div><div class="cl-stat cl-ns"><div class="cs-n">'+ns+'</div><div class="cs-l">Not Started</div></div></div>');
@@ -2453,7 +2532,7 @@ function tab(id,btn){
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('on');});
   var pg=document.getElementById(id);if(pg)pg.classList.add('on');if(btn)btn.classList.add('on');
   if(id==='pLT')renderLTTab();
-  if(STATE.generated){recalc();if(id==='p11')renderExecSummary();}
+  if(STATE.generated)recalc();
   autoSave();
 }
 function toggleSec(secId,btnId,label,flagName){
@@ -2466,17 +2545,17 @@ function toggleSec(secId,btnId,label,flagName){
 // ─────────────────────────────────────────────────────────────────────────────
 // SAVE / EXPORT / IMPORT
 // ─────────────────────────────────────────────────────────────────────────────
-function saveCommentary(){try{var el=document.getElementById('exec_commentary');if(el)localStorage.setItem(LS_COMM,JSON.stringify({v:el.value}));setText('exec_commentary_saved','Saved '+new Date().toLocaleTimeString());}catch(e){}}
+function saveCommentary(){try{if(autosavePaused)return;var el=document.getElementById('exec_commentary');if(el&&el.value)localStorage.setItem(LS_COMM,JSON.stringify({v:el.value}));else localStorage.removeItem(LS_COMM);setText('exec_commentary_saved','Saved '+new Date().toLocaleTimeString());}catch(e){}}
 function loadCommentary(){try{var s=JSON.parse(localStorage.getItem(LS_COMM)||'{}');var el=document.getElementById('exec_commentary');if(el&&s.v)el.value=s.v;}catch(e){}}
 function autoSave(){if(autoSaveTimer)clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(doSave,700);}
 function doSave(){
-  if(!STATE.generated)return;
+  if(!STATE.generated||autosavePaused)return;
   try{localStorage.setItem(LS_KEY,JSON.stringify(collectAllData()));setText('hdr_save_ts','Auto-saved '+new Date().toLocaleTimeString());}
   catch(e){setText('hdr_save_ts','Auto-save failed \u2014 data too large');console.warn('localStorage quota:',e);}
 }
 function collectAllData(){
   var data={
-    version:'6.74',ts:Date.now(),resolution:RESOLUTION,wfView:wfView,gcMode:gcMode,sfVisible:sfVisible,dwVisible:dwVisible,
+    version:'6.75',ts:Date.now(),resolution:RESOLUTION,wfView:wfView,gcMode:gcMode,sfVisible:sfVisible,dwVisible:dwVisible,
     leadTimeAdjust:leadTimeAdjust,ltSpreadMode:ltSpreadMode,rampMetric:rampMetric,
     ltConfig:{phases:{},deptMap:{}},
     state:{supplier:STATE.supplier,program:STATE.program,date:STATE.date,auditor:STATE.auditor,startYr:STATE.startYr,numYrs:STATE.numYrs,mlis:STATE.mlis,depts:STATE.depts,clItems:STATE.clItems,years:STATE.years},
@@ -2486,7 +2565,7 @@ function collectAllData(){
     footprint:{wdays:sv('fp_wdays'),plf:sv('fp_plf'),avail:{},notes:{}},
     headcount:{ops:sv('hc_ops'),off:sv('hc_off'),tgt:sv('hc_tgt'),lead:sv('hc_lead')},
     checklist:{},scenarios:{wf_dept:sv('wf_dept'),wf_view:wfView},
-    rampUp:{},util:{lc_yr:sv('lc_yr')},gap:{gc_dept:sv('gc_dept'),gc_mode:gcMode},
+    rampUp:{},util:{lc_yr:sv('lc_yr')||loadYearSel,lc_period:sv('lc_period')||loadPeriodSel},gap:{gc_dept:sv('gc_dept'),gc_mode:gcMode},
     wip:{area:sv('wip_area')},actionLog:[]
   };
   for(var mi=0;mi<STATE.mlis.length;mi++){
@@ -2528,32 +2607,59 @@ function collectAllData(){
   });
   return data;
 }
+function validateImportData(data){
+  if(!data||typeof data!=='object'||Array.isArray(data))return'Root value must be an object.';
+  if(!data.state||typeof data.state!=='object')return'Missing workbook state.';
+  if(!Array.isArray(data.state.mlis)||!Array.isArray(data.state.depts))return'Product lines and departments must be arrays.';
+  if(data.state.mlis.length<1||data.state.mlis.length>50)return'Product line count must be between 1 and 50.';
+  if(data.state.depts.length<1||data.state.depts.length>100)return'Department count must be between 1 and 100.';
+  for(var mi=0;mi<data.state.mlis.length;mi++)if(!data.state.mlis[mi]||typeof data.state.mlis[mi].name!=='string'||!data.state.mlis[mi].name.trim())return'Every product line needs a name.';
+  for(var di=0;di<data.state.depts.length;di++)if(!data.state.depts[di]||typeof data.state.depts[di].name!=='string'||!data.state.depts[di].name.trim())return'Every department needs a name.';
+  if(data.state.clItems!==undefined&&(!Array.isArray(data.state.clItems)||data.state.clItems.length>200))return'Checklist is invalid or too large.';
+  if(data.actionLog!==undefined&&(!Array.isArray(data.actionLog)||data.actionLog.length>500))return'Action log is invalid or too large.';
+  return'';
+}
+function normalizeLTConfig(raw,mliCount,deptCount){
+  var out={phases:{},deptMap:{}},rp=raw&&raw.phases,rm=raw&&raw.deptMap;
+  for(var mi=0;mi<mliCount;mi++){
+    var src=rp&&Array.isArray(rp[mi])?rp[mi].slice(0,50):[],idMap=Object.create(null),phases=[];
+    src.forEach(function(p,idx){
+      if(!p||typeof p!=='object')return;
+      var oldId=String(p.id||''),newId='ph_'+mi+'_'+idx;
+      idMap[oldId]=newId;
+      phases.push({id:newId,name:cleanText(p.name||('Phase '+(idx+1)),80),startWk:clampNum(p.startWk,0,260,0),endWk:clampNum(p.endWk,0,260,0),color:safeColor(p.color)});
+    });
+    if(phases.length)out.phases[mi]=phases;
+    var map=Object.create(null),srcMap=rm&&rm[mi]&&typeof rm[mi]==='object'?rm[mi]:{};
+    for(var di=0;di<deptCount;di++){var old=own(srcMap,di)?String(srcMap[di]):'none';map[di]=idMap[old]||'none';}
+    if(phases.length)out.deptMap[mi]=map;
+  }
+  return out;
+}
 function restoreAllData(data){
-  if(!data||!data.state)return;
+  var importErr=validateImportData(data);if(importErr){alert('Invalid workbook: '+importErr);return;}
+  autosavePaused=false;
   var s=data.setup||{};
   ['supplier','program','date','auditor','startYr','numYrs'].forEach(function(k){var el=document.getElementById('cfg_'+k);if(el&&s[k])el.value=s[k];});
   document.getElementById('mli_tbody').innerHTML='';document.getElementById('dept_tbody').innerHTML='';document.getElementById('cl_cfg_list').innerHTML='';
   mliC=0;deptC=0;clC=0;rampMsC=0;
   var st=data.state;
-  try{if(st.mlis)st.mlis.forEach(function(m){addMLI(m.name,m.code,0,m.risk);});}catch(e){console.warn('MLI restore',e);}
-  try{if(st.depts)st.depts.forEach(function(d){addDept(d.name,d.type);});}catch(e){console.warn('Dept restore',e);}
-  try{if(st.clItems)st.clItems.forEach(function(c){addCLItem(c);});}catch(e){console.warn('CL restore',e);}
-  if(data.resolution)RESOLUTION=data.resolution;if(data.wfView)wfView=data.wfView;if(data.gcMode)gcMode=data.gcMode;
-  if(data.sfVisible!==undefined)sfVisible=data.sfVisible;if(data.dwVisible!==undefined)dwVisible=data.dwVisible;
-  if(data.rampMetric)rampMetric=data.rampMetric;
-  if(data.leadTimeAdjust!==undefined)leadTimeAdjust=data.leadTimeAdjust;
-  if(data.ltSpreadMode!==undefined)ltSpreadMode=data.ltSpreadMode;
+  try{st.mlis.forEach(function(m){m=m&&typeof m==='object'?m:{};var risk=['Critical','High','Medium','Low'].indexOf(m.risk)>=0?m.risk:'Medium';addMLI(cleanText(m.name,120),cleanText(m.code,40),0,risk);});}catch(e){console.warn('MLI restore',e);}
+  try{st.depts.forEach(function(d){d=d&&typeof d==='object'?d:{};var type=['prod','off','wh'].indexOf(d.type)>=0?d.type:'prod';addDept(cleanText(d.name,120),type);});}catch(e){console.warn('Dept restore',e);}
+  try{if(Array.isArray(st.clItems))st.clItems.forEach(function(c){addCLItem(cleanText(c,200));});}catch(e){console.warn('CL restore',e);}
+  RESOLUTION=['annual','quarterly','monthly'].indexOf(data.resolution)>=0?data.resolution:'annual';wfView=['summary','detail'].indexOf(data.wfView)>=0?data.wfView:'summary';gcMode=['units','hours'].indexOf(data.gcMode)>=0?data.gcMode:'units';
+  sfVisible=data.sfVisible===true;dwVisible=data.dwVisible===true;
+  rampMetric={};if(data.rampMetric&&typeof data.rampMetric==='object')for(var rmi=0;rmi<st.depts.length;rmi++)if(['hours','units','hc'].indexOf(data.rampMetric[rmi])>=0)rampMetric[rmi]=data.rampMetric[rmi];
+  leadTimeAdjust=data.leadTimeAdjust===true;ltSpreadMode=leadTimeAdjust&&data.ltSpreadMode===true;
   invalidateLTSpreadCache();
-  if(data.ltConfig){
-    ltConfig={phases:{},deptMap:{}};
-    if(data.ltConfig.phases)for(var mi in data.ltConfig.phases)ltConfig.phases[mi]=data.ltConfig.phases[mi];
-    if(data.ltConfig.deptMap)for(var mi in data.ltConfig.deptMap)ltConfig.deptMap[mi]=data.ltConfig.deptMap[mi];
-  }
-  updateHeader();generateWorkbook();
+  ltConfig=normalizeLTConfig(data.ltConfig,st.mlis.length,st.depts.length);
+  updateHeader();generateWorkbook(true);
   setTimeout(function(){restoreValues(data);},400);
 }
 function restoreValues(data){
   function sval(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==null&&val!=='')el.value=val;}
+  loadYearSel=data.util&&data.util.lc_yr!==undefined?String(data.util.lc_yr):'';
+  loadPeriodSel=data.util&&data.util.lc_period!==undefined?String(data.util.lc_period):'';
   if(data.demand){
     var ann=data.demand.annual||{};for(var i=0;i<STATE.mlis.length;i++){var md=ann['m'+i];if(!md)continue;for(var y=0;y<STATE.years.length;y++)sval('d_m'+i+'_y'+y,md['y'+y]);}
     if(data.demand.quarterly)for(var i=0;i<STATE.mlis.length;i++){var mq=data.demand.quarterly['m'+i];if(!mq)continue;for(var y=0;y<STATE.years.length;y++){var yq=mq['y'+y];if(!yq)continue;for(var p=0;p<4;p++)sval('d_m'+i+'_y'+y+'_p'+p+'_quarterly',yq['p'+p]);}}
@@ -2581,14 +2687,14 @@ function restoreValues(data){
       if(rd.inv)window['_ramp_inv_d'+i]=rd.inv;
       if(rd.own)window['_ramp_own_d'+i]=rd.own;
       if(rd.note)window['_ramp_note_d'+i]=rd.note;
-      if(rd.milestones&&rd.milestones.length>0){var tb=document.getElementById('ramp_ms_tbody_d'+i);if(tb){tb.innerHTML='';rd.milestones.forEach(function(ms){addRampMilestone(i,ms.date,ms.desc,ms.fte,ms.add,ms.override);});}}
+      if(Array.isArray(rd.milestones)&&rd.milestones.length>0){var tb=document.getElementById('ramp_ms_tbody_d'+i);if(tb){tb.innerHTML='';rd.milestones.slice(0,100).forEach(function(ms){if(ms&&typeof ms==='object')addRampMilestone(i,cleanText(ms.date,20),cleanText(ms.desc,200),clampNum(ms.fte,0,10000,0),clampNum(ms.add,0,1000000000,0),ms.override===true);});}}
     }catch(e){console.warn('Ramp restore error dept '+i,e);}
   }
   if(data.wip&&data.wip.area)sval('wip_area',data.wip.area);
   if(sfVisible){var sec=document.getElementById('sfsec');if(sec)sec.classList.remove('hidden');var btn=document.getElementById('sfbtn');if(btn)btn.textContent='Hide Sq Ft Per Unit';}
   if(dwVisible){var sec2=document.getElementById('dwsec');if(sec2)sec2.classList.remove('hidden');var btn2=document.getElementById('dwbtn');if(btn2)btn2.textContent='Hide Dwell Days Per Unit';}
   if(data.actionLog&&data.actionLog.length>0){var tb2=document.getElementById('al_tbody');if(tb2){tb2.innerHTML='';data.actionLog.forEach(function(row){addALRow(row.action,row.cat,row.owner,row.due,row.pri,row.stat);});}}
-  sval('lc_yr',data.util?data.util.lc_yr:'');
+  sval('lc_yr',loadYearSel);sval('lc_period',loadPeriodSel);
   if(data.gap){sval('gc_dept',data.gap.gc_dept);if(data.gap.gc_mode)gcMode=data.gap.gc_mode;}
   updateSubAnnualTotals('quarterly');updateSubAnnualTotals('monthly');syncMonthlyToQuarterly();applyDemandResolutionView();
   runLTValidation();updateLTNavBadge();
@@ -2610,36 +2716,38 @@ function exportData(){
   var safeSupplier=STATE.supplier.replace(/[^a-zA-Z0-9_\-]/g,'_');
   var json=JSON.stringify(collectAllData(),null,2),blob=new Blob([json],{type:'application/json'});
   var url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='Capacity_Workbook_v674_'+safeSupplier+'_'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='Capacity_Workbook_v675_'+safeSupplier+'_'+new Date().toISOString().slice(0,10)+'.json';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 function importData(event){
   var file=event.target.files[0];if(!file)return;
+  if(file.size>5*1024*1024){alert('Import rejected: file is larger than 5 MB.');event.target.value='';return;}
   var reader=new FileReader();
   reader.onload=function(e){
     try{
       var data=JSON.parse(e.target.result);
-      if(!data.state||!data.state.mlis){alert('Invalid file.');return;}
+      var importErr=validateImportData(data);if(importErr){alert('Invalid file: '+importErr);return;}
       if(confirm('This will replace all current data. Continue?'))restoreAllData(data);
     }catch(err){alert('Could not read file: '+err.message);}
     event.target.value='';
   };
   reader.readAsText(file);
 }
-function clearLS(){if(confirm('Clear all auto-saved browser data?')){localStorage.removeItem(LS_KEY);setText('hdr_save_ts','Browser data cleared');}}
+function clearLS(){if(confirm('Clear all auto-saved browser data and commentary?')){localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_COMM);autosavePaused=true;var comm=document.getElementById('exec_commentary');if(comm)comm.value='';setText('hdr_save_ts','Browser data cleared — autosave resumes on next edit');}}
 window.onload=function(){
   initSetup();loadCommentary();
   try{
     var saved=localStorage.getItem(LS_KEY);
     if(saved){
       var data=JSON.parse(saved);
-      if(data&&data.state&&data.state.mlis&&data.state.mlis.length>0){
+      if(!validateImportData(data)){
         var dt=data.ts?new Date(data.ts).toLocaleString():'unknown time';
         if(confirm('Auto-saved session found from '+dt+'.\n\nRestore it?'))restoreAllData(data);
       }
     }
   }catch(e){console.warn('Could not restore saved session:',e);}
 };
+window.addEventListener('pagehide',function(){if(STATE.generated)doSave();saveCommentary();});
 </script>
 </body>
 </html>
