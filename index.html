@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="A self-contained capacity and engineering planning workbook.">
-<title>Capacity &amp; Engineering Workbook v6.77</title>
+<title>Capacity &amp; Engineering Workbook v6.78</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:13px;}
@@ -300,15 +300,26 @@ input[type=number].ni{text-align:right;}
 .lt-ok-banner{background:#f0fff4;border:1px solid #9ae6b4;border-left:4px solid #38a169;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#22543d;}
 /* gap chart LT note */
 .gc-lt-note{background:#faf5ff;border:1px solid #e9d8fd;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#6b46c1;}
+.eq-empty{padding:28px;text-align:center;color:#718096;border:2px dashed #cbd5e0;border-radius:10px;background:#f8fafc;}
+.eq-empty .icon{font-size:32px;margin-bottom:8px;}
+.eq-cap{font-weight:700;color:#2b6cb0;white-space:nowrap;}
+.eq-plan{font-size:9px;color:#6b46c1;margin-top:2px;white-space:nowrap;}
+.eq-route-zero{color:#a0aec0;}
+.eq-gov{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:800;}
+.eq-gov.labor{background:#ebf8ff;color:#2b6cb0;}.eq-gov.equipment{background:#faf5ff;color:#6b46c1;}.eq-gov.none{background:#edf2f7;color:#718096;}
+.eq-warning{font-size:10px;color:#975a16;margin-top:4px;}
+.eq-config-table input,.eq-config-table select{min-width:82px;}.eq-config-table .eq-name{min-width:130px;}.eq-config-table .eq-note{min-width:150px;}
+.eq-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin-bottom:14px;}
+.eq-stat{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;}.eq-stat .v{font-size:18px;font-weight:800;color:#2d3748;}.eq-stat .l{font-size:9px;text-transform:uppercase;color:#718096;margin-top:2px;}
 @media(max-width:900px){.kpi-strip{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:600px){.g3{grid-template-columns:1fr;}.g4{grid-template-columns:1fr 1fr;}.g2{grid-template-columns:1fr;}.kpi-strip{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.g3{grid-template-columns:1fr;}.g4{grid-template-columns:1fr 1fr;}.g2{grid-template-columns:1fr;}.kpi-strip{grid-template-columns:repeat(2,1fr);}.eq-stat-grid{grid-template-columns:1fr 1fr;}}
 @media print{.hdr,.nav,.no-print{display:none!important;}.pg{display:none!important;}#p11{display:block!important;padding:10px!important;}body{background:white;}.card{box-shadow:none;border:1px solid #e2e8f0;page-break-inside:avoid;}}
 </style>
 </head>
 <body>
 <div class="hdr">
   <div class="hdr-left">
-    <h1 id="hdr_title">Capacity &amp; Engineering Workbook v6.77</h1>
+    <h1 id="hdr_title">Capacity &amp; Engineering Workbook v6.78</h1>
     <div class="sub" id="hdr_sub">Capacity Planning</div>
     <div class="hdr-save-meta" id="hdr_save_ts"></div>
   </div>
@@ -332,6 +343,7 @@ input[type=number].ni{text-align:right;}
   <button onclick="tab('p2',this)" id="nav_p2">Base Capacity<span class="nav-dot" id="dot_p2"></span></button>
   <button onclick="tab('p3',this)" id="nav_p3">Std Hours &amp; Inputs<span class="nav-dot" id="dot_p3"></span></button>
   <button onclick="tab('p4',this)" id="nav_p4">Efficiency &amp; OEE<span class="nav-dot" id="dot_p4"></span></button>
+  <button onclick="tab('pEq',this)" id="nav_pEq">Machines &amp; Equipment<span class="nav-dot" id="dot_pEq"></span></button>
   <button onclick="tab('p5',this)" id="nav_p5">Utilization<span class="nav-dot" id="dot_p5"></span></button>
   <button onclick="tab('p6',this)" id="nav_p6">Gap Chart<span class="nav-dot" id="dot_p6"></span></button>
   <button onclick="tab('p7',this)" id="nav_p7">Scenarios &amp; Recovery<span class="nav-dot" id="dot_p7"></span></button>
@@ -394,13 +406,13 @@ input[type=number].ni{text-align:right;}
     <div class="guide-hero">
       <h1>📘 Capacity &amp; Engineering Workbook — Operating Guide</h1>
       <p>Use this guide to build a defensible capacity model, understand how each calculation works, verify that the inputs are complete, and translate the result into an executable recovery plan. The workbook remains one self-contained browser file; working data stays in this browser until exported.</p>
-      <span class="guide-badge">v6.77</span><span class="guide-badge">Single-file</span><span class="guide-badge">LT phase aware</span><span class="guide-badge">Monthly footprint</span>
+      <span class="guide-badge">v6.78</span><span class="guide-badge">Single-file</span><span class="guide-badge">Labor + equipment</span><span class="guide-badge">LT phase aware</span><span class="guide-badge">Monthly footprint</span>
       <div class="guide-hero-actions"><button class="btn btn-bl" onclick="guideGo('p0','nav_p0')">Start a Workbook</button><button class="btn btn-pu" onclick="guideOpenSection('guide_example')">Open Worked Example</button><button class="btn btn-gn" onclick="guideOpenSection('guide_readiness')">Model Readiness</button></div>
     </div>
 
     <div class="guide-toolbar">
       <input class="guide-search" id="guide_search" type="search" placeholder="Search the guide: spread, OEE, dwell, import, headcount..." oninput="guideSearch(this.value)">
-      <button class="btn btn-gy" onclick="guideExpandAll(true)">Expand All</button><button class="btn btn-gy" onclick="guideExpandAll(false)">Collapse All</button><button class="btn btn-bl" onclick="guideResetSearch()">Clear Search</button><span class="guide-search-count" id="guide_search_count">11 sections</span>
+      <button class="btn btn-gy" onclick="guideExpandAll(true)">Expand All</button><button class="btn btn-gy" onclick="guideExpandAll(false)">Collapse All</button><button class="btn btn-bl" onclick="guideResetSearch()">Clear Search</button><span class="guide-search-count" id="guide_search_count">12 sections</span>
     </div>
 
     <div class="guide-overview">
@@ -415,7 +427,7 @@ input[type=number].ni{text-align:right;}
         <div class="guide-step"><div class="guide-step-num">1</div><h3>Setup</h3><p>Name the assessment, define product lines, classify departments, and customize readiness items. Generate once the structure is correct.</p><button class="guide-go" onclick="guideGo('p0','nav_p0')">Go to Setup</button></div>
         <div class="guide-step"><div class="guide-step-num">2</div><h3>Delivery Demand</h3><p>Enter annual, quarterly, or monthly ship quantities. Use monthly demand when seasonality or specific launch timing matters.</p><button class="guide-go" onclick="guideGo('p1','nav_p1')">Go to Demand</button></div>
         <div class="guide-step"><div class="guide-step-num">3</div><h3>Capacity Basis</h3><p>Enter FTE and hours, or a demonstrated annual capacity. Confirm the constraint and document the source.</p><button class="guide-go" onclick="guideGo('p2','nav_p2')">Go to Base Capacity</button></div>
-        <div class="guide-step"><div class="guide-step-num">4</div><h3>Routing &amp; Space</h3><p>Enter standard hours for every product/department combination. Add copy factor, space per unit, and dwell where applicable.</p><button class="guide-go" onclick="guideGo('p3','nav_p3')">Go to Inputs</button></div>
+        <div class="guide-step"><div class="guide-step-num">4</div><h3>Routing, Equipment &amp; Space</h3><p>Enter labor standard hours, machine groups and machine-hours per unit. Add copy factor, space per unit, and dwell where applicable.</p><button class="guide-go" onclick="guideGo('pEq','nav_pEq')">Go to Equipment</button></div>
         <div class="guide-step"><div class="guide-step-num">5</div><h3>Efficiency &amp; LT</h3><p>Define losses or OEE, rework, phase windows, and one department assignment per product line.</p><button class="guide-go" onclick="guideGo('pLT','nav_pLT')">Go to Lead Times</button></div>
         <div class="guide-step"><div class="guide-step-num">6</div><h3>Validate Results</h3><p>Review utilization and gaps at the resolution used for decisions. Investigate every yellow/red result and every warning.</p><button class="guide-go" onclick="guideGo('p5','nav_p5')">Go to Utilization</button></div>
         <div class="guide-step"><div class="guide-step-num">7</div><h3>Resources &amp; Recovery</h3><p>Check footprint/storage and headcount. Model scenarios, date milestones, and assign actions to close the gaps.</p><button class="guide-go" onclick="guideGo('p7','nav_p7')">Go to Recovery</button></div>
@@ -468,6 +480,17 @@ input[type=number].ni{text-align:right;}
         </div>
       </section>
 
+      <section class="guide-section" id="guide_equipment" data-guide="machine equipment mill lathe oven test stand hours routing oee utilization bottleneck installed planned add shift relief footprint">
+        <button class="guide-section-head" onclick="guideToggleSection(this)" aria-expanded="false"><span><span class="guide-section-title">Machine &amp; Equipment Capacity</span><span class="guide-section-kicker">Model equipment as a parallel constraint to labor, with its own routing, availability, plan, and footprint</span></span><span class="guide-chevron">⌄</span></button>
+        <div class="guide-section-body">
+          <div class="guide-two"><div><h3>Equipment load</h3><div class="guide-formula"><b>Machine Load</b> = Demand × Machine Hours/Unit × (1 + Department Rework%)</div><p>Machine routing is independent from labor standard hours. A product may require labor time and machine time simultaneously, so the two constraints are never added together.</p></div><div><h3>Equipment capacity</h3><div class="guide-formula"><b>Net Machine Hours</b> = Installed Quantity × Scheduled Hours/Machine/Year × Equipment OEE%</div><p>Equipment OEE is specific to that machine group. Department labor efficiency is not applied to machine capacity.</p></div></div>
+          <h3>Scenario plan</h3><p>Enter planned machines, planned scheduled hours, planned OEE, optional outsourced load relief, and an in-service date. Before that month, current capacity applies; from that month forward, the plan values apply.</p>
+          <ul><li>Use one equipment group for resources that share the same routing and available-hour basis.</li><li>Separate unlike assets—for example, 3-axis mills and 5-axis mills—when products consume them differently.</li><li>Machine load follows the assigned department’s lead-time phase and Spread setting.</li><li>The governing constraint compares labor utilization with each equipment group; the highest valid utilization governs.</li><li>A machine with routed demand but zero capacity is reported as <b>No Capacity</b>, not as 0% utilization.</li><li>Installed-machine square feet is shown separately from WIP footprint to prevent accidental double counting.</li></ul>
+          <div class="guide-callout warn"><b>Operator coupling:</b> equipment capacity does not prove labor is available to run it. Review both the machine result and its department labor result.</div>
+          <button class="guide-go" onclick="guideGo('pEq','nav_pEq')">Go to Machines &amp; Equipment</button>
+        </div>
+      </section>
+
       <section class="guide-section" id="guide_footprint" data-guide="footprint warehouse storage square feet cubic feet pallet positions dwell working days wip peak monthly">
         <button class="guide-section-head" onclick="guideToggleSection(this)" aria-expanded="false"><span><span class="guide-section-title">Footprint, WIP &amp; Warehouse Storage</span><span class="guide-section-kicker">Monthly simultaneous product mix, dwell, space per unit, and dimensional separation</span></span><span class="guide-chevron">⌄</span></button>
         <div class="guide-section-body">
@@ -495,7 +518,10 @@ input[type=number].ni{text-align:right;}
           <table class="guide-table"><thead><tr><th>Field</th><th>Meaning</th><th>Common mistake</th></tr></thead><tbody>
             <tr><td>MLI / Product Line</td><td>The product, model family, or demand stream being planned.</td><td>Combining products that have materially different routings or space requirements.</td></tr>
             <tr><td>Department Type</td><td>Production, Office, or Warehouse; controls which calculations and units apply.</td><td>Using Production for a warehouse and then interpreting square feet as storage volume.</td></tr>
-            <tr><td>Standard Hours/Unit</td><td>Labor or machine hours consumed by one unit in that department.</td><td>Entering cycle time without multiplying by labor content, cavities, yield, or routing frequency.</td></tr>
+            <tr><td>Standard Hours/Unit</td><td>Department labor hours consumed by one unit.</td><td>Entering machine cycle time as if it were total labor content.</td></tr>
+            <tr><td>Machine Hours/Unit</td><td>Occupation or run time consumed on one equipment group by one finished unit.</td><td>Using labor touch time, or forgetting routing frequency, cavities, and simultaneous-machine assumptions.</td></tr>
+            <tr><td>Scheduled Hrs/Machine/Yr</td><td>Gross time one installed asset is scheduled to be available before equipment OEE.</td><td>Entering already-netted productive hours and then applying OEE again.</td></tr>
+            <tr><td>Equipment OEE</td><td>Availability × Performance × Quality for that machine group.</td><td>Reusing department labor efficiency even though the loss mechanisms differ.</td></tr>
             <tr><td>Copy Factor</td><td>Percent of product demand that creates an Office-department transaction.</td><td>Using 50 when 50× was intended; the field is a percentage and is capped at 100%.</td></tr>
             <tr><td>Base Hours</td><td>Theoretical annual hours before efficiency losses.</td><td>Entering already-netted hours and then reducing them again through efficiency.</td></tr>
             <tr><td>Demonstrated Hours</td><td>Evidence-based usable annual capacity that overrides theoretical capacity.</td><td>Using a one-time record without confirming it is sustainable.</td></tr>
@@ -512,7 +538,7 @@ input[type=number].ni{text-align:right;}
       <section class="guide-section safe" id="guide_readiness" data-guide="model readiness validate complete checklist audit trust quality missing inputs">
         <button class="guide-section-head" onclick="guideToggleSection(this)" aria-expanded="false"><span><span class="guide-section-title">Model Readiness Checklist</span><span class="guide-section-kicker">Minimum checks before presenting the workbook as decision-grade</span></span><span class="guide-chevron">⌄</span></button>
         <div class="guide-section-body">
-          <div class="guide-checklist"><div class="guide-check">Product lines and departments match the real routing.</div><div class="guide-check">Forecast totals reconcile to the source forecast.</div><div class="guide-check">Monthly shape reflects launches, seasonality, and shutdowns.</div><div class="guide-check">Every demanded product has standard hours in each applicable department.</div><div class="guide-check">Capacity source is identified as theoretical [T] or demonstrated [D].</div><div class="guide-check">Efficiency losses or OEE have an evidence-based source.</div><div class="guide-check">Rework is not double-counted in both load and efficiency.</div><div class="guide-check">Every department/product combination has a valid LT phase.</div><div class="guide-check">Forecast-boundary clipped hours are zero or explicitly accepted.</div><div class="guide-check">Dwell and Space/Unit are complete for every demanded product.</div><div class="guide-check">Warehouse basis is correct: cubic feet or pallet positions.</div><div class="guide-check">Yellow and red periods have an owner and countermeasure.</div><div class="guide-check">Headcount assumptions reflect productive—not paid—hours.</div><div class="guide-check">Recovery milestones include dates, owners, and usable capacity.</div><div class="guide-check">Readiness checklist owners and evidence are current.</div><div class="guide-check">A JSON backup was exported before the review.</div></div>
+          <div class="guide-checklist"><div class="guide-check">Product lines and departments match the real routing.</div><div class="guide-check">Forecast totals reconcile to the source forecast.</div><div class="guide-check">Monthly shape reflects launches, seasonality, and shutdowns.</div><div class="guide-check">Every demanded product has standard labor hours in each applicable department.</div><div class="guide-check">Every constrained asset has machine-hour routing, quantity, scheduled hours, and equipment OEE.</div><div class="guide-check">Equipment plans have a credible in-service date and floor-space allowance.</div><div class="guide-check">Capacity source is identified as theoretical [T] or demonstrated [D].</div><div class="guide-check">Efficiency losses or OEE have an evidence-based source.</div><div class="guide-check">Rework is not double-counted in both load and efficiency.</div><div class="guide-check">Every department/product combination has a valid LT phase.</div><div class="guide-check">Forecast-boundary clipped labor and machine hours are zero or explicitly accepted.</div><div class="guide-check">Dwell and Space/Unit are complete for every demanded product.</div><div class="guide-check">Warehouse basis is correct: cubic feet or pallet positions.</div><div class="guide-check">Yellow and red periods have an owner and countermeasure.</div><div class="guide-check">Headcount assumptions reflect productive—not paid—hours.</div><div class="guide-check">Recovery milestones include dates, owners, and usable capacity.</div><div class="guide-check">Readiness checklist owners and evidence are current.</div><div class="guide-check">A JSON backup was exported before the review.</div></div>
           <div class="guide-callout good"><b>Decision-grade means traceable, not merely complete.</b> A reviewer should be able to trace forecast → routing → required hours → capacity source → gap → countermeasure without guessing.</div>
         </div>
       </section>
@@ -531,7 +557,7 @@ input[type=number].ni{text-align:right;}
         <div class="guide-section-body">
           <table class="guide-table"><thead><tr><th>Symptom</th><th>Likely cause / first check</th></tr></thead><tbody>
             <tr><td>Monthly demand is unexpectedly zero</td><td>A monthly schedule exists for that product/year; blank months are intentionally zero. Review all 12 entries.</td></tr>
-            <tr><td>Product disappears in a period view</td><td>Confirm annual demand exists or enter a quarterly/monthly schedule. Refresh if the page is older than v6.77.</td></tr>
+            <tr><td>Product disappears in a period view</td><td>Confirm annual demand exists or enter a quarterly/monthly schedule. Refresh if the page is older than v6.78.</td></tr>
             <tr><td>Load moved into an earlier month/year</td><td>LT Adjust is ON. Check the department’s assigned phase and Start Week.</td></tr>
             <tr><td>A four-week phase touches two months</td><td>Normal calendar overlap. Verify total spread hours reconcile to the unspread load.</td></tr>
             <tr><td>Utilization shows “No Cap”</td><td>Required hours exist but usable capacity is zero. Enter base/demonstrated capacity and efficiency.</td></tr>
@@ -539,7 +565,7 @@ input[type=number].ni{text-align:right;}
             <tr><td>Hours clipped before the forecast</td><td>The LT shift starts before the first displayed month. Add an earlier buffer year.</td></tr>
             <tr><td>Footprint is incomplete</td><td>Enter Dwell Days, Space/Unit, and Available Space for each demanded product and applicable department.</td></tr>
             <tr><td>Warehouse result has the wrong unit</td><td>Choose Cubic Feet or Pallet Positions in Footprint and confirm the Space/Unit values use the same basis.</td></tr>
-            <tr><td>Summary and detail disagree</td><td>Confirm the same resolution, LT, and Spread state; then refresh the current v6.77 page.</td></tr>
+            <tr><td>Summary and detail disagree</td><td>Confirm the same resolution, LT, and Spread state; then refresh the current v6.78 page.</td></tr>
             <tr><td>Autosave failed</td><td>Browser storage may be full. Export a JSON backup immediately.</td></tr>
             <tr><td>GitHub Pages shows an old version</td><td>Reload the page or add a new query string after deployment cache propagation completes.</td></tr>
           </tbody></table>
@@ -550,11 +576,11 @@ input[type=number].ni{text-align:right;}
         <button class="guide-section-head" onclick="guideToggleSection(this)" aria-expanded="false"><span><span class="guide-section-title">Glossary &amp; Version Notes</span><span class="guide-section-kicker">Abbreviations used throughout the workbook and the recent calculation changes</span></span><span class="guide-chevron">⌄</span></button>
         <div class="guide-section-body">
           <p><span class="guide-chip">MLI — Product/model line</span><span class="guide-chip">LT — Lead time</span><span class="guide-chip">OEE — Overall Equipment Effectiveness</span><span class="guide-chip">WIP — Work in process</span><span class="guide-chip">FTE — Full-time equivalent</span><span class="guide-chip">CF — Office Copy Factor</span><span class="guide-chip">RAG — Red/Amber/Green</span><span class="guide-chip">[T] — Theoretical</span><span class="guide-chip">[D] — Demonstrated</span><span class="guide-chip">PLF — Peak Load Factor</span></p>
-          <h3>Recent versions</h3><table class="guide-table"><thead><tr><th>Version</th><th>Change</th></tr></thead><tbody><tr><td>v6.77</td><td>Expanded searchable operating guide, workflow, worked example, field dictionary, readiness checklist, and troubleshooting reference.</td></tr><tr><td>v6.76</td><td>Monthly footprint peaks; warehouse cubic feet/pallet-position basis; dimensional separation; footprint completeness warnings.</td></tr><tr><td>v6.75</td><td>LT/Spread reconciliation, monthly timing model, import and rendering hardening, forecast-boundary warnings, and active-tab performance.</td></tr></tbody></table>
+          <h3>Recent versions</h3><table class="guide-table"><thead><tr><th>Version</th><th>Change</th></tr></thead><tbody><tr><td>v6.78</td><td>Explicit machine/equipment capacity, routing, dated recovery plans, governing constraints, installed footprint, persistence, and executive reporting.</td></tr><tr><td>v6.77</td><td>Expanded searchable operating guide, workflow, worked example, field dictionary, readiness checklist, and troubleshooting reference.</td></tr><tr><td>v6.76</td><td>Monthly footprint peaks; warehouse cubic feet/pallet-position basis; dimensional separation; footprint completeness warnings.</td></tr></tbody></table>
         </div>
       </section>
     </div>
-    <div class="guide-version">Capacity &amp; Engineering Workbook v6.77 · Embedded guide · No external dependencies</div>
+    <div class="guide-version">Capacity &amp; Engineering Workbook v6.78 · Embedded guide · No external dependencies</div>
   </div>
 </div>
 
@@ -562,7 +588,7 @@ input[type=number].ni{text-align:right;}
 <div id="p1" class="pg"><div id="p1_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
 <div id="pLT" class="pg">
   <div class="card lt-card">
-    <h2>⏳ Lead Times — Phase Configuration <span style="font-size:10px;font-weight:400;color:#718096;margin-left:8px">v6.77</span></h2>
+    <h2>⏳ Lead Times — Phase Configuration <span style="font-size:10px;font-weight:400;color:#718096;margin-left:8px">v6.78</span></h2>
     <div class="sub">Define independent lead time phases per MLI. Assign each department to exactly one phase per MLI. The model places full demand at Delivery Date − Phase Start Week for that department's capacity calculation.</div>
   </div>
   <div id="pLT_not_generated" class="infobox ib-y" style="display:block">Complete Setup and generate the workbook first.</div>
@@ -642,6 +668,7 @@ input[type=number].ni{text-align:right;}
 <div id="p2" class="pg"><div id="p2_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
 <div id="p3" class="pg"><div id="p3_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
 <div id="p4" class="pg"><div id="p4_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
+<div id="pEq" class="pg"><div id="pEq_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
 <div id="p5" class="pg"><div id="p5_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
 <div id="p6" class="pg"><div id="p6_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
 <div id="p7" class="pg"><div id="p7_content"><div class="not-generated"><div class="icon">⚙</div><b>Complete Setup and generate the workbook first</b></div></div></div>
@@ -660,7 +687,7 @@ input[type=number].ni{text-align:right;}
     </div>
     <div class="kpi-strip">
       <div class="kpi-tile red" id="ex_kpi_tile_r"><div class="kv" id="ex_kpi_r">—</div><div class="kl">Readiness Score</div><div class="ks" id="ex_kpi_r_sub">—</div></div>
-      <div class="kpi-tile red"><div class="kv" id="ex_kpi_risk">—</div><div class="kl">Depts At Risk</div><div class="ks" id="ex_kpi_risk_sub">—</div></div>
+      <div class="kpi-tile red"><div class="kv" id="ex_kpi_risk">—</div><div class="kl">Resources At Risk</div><div class="ks" id="ex_kpi_risk_sub">—</div></div>
       <div class="kpi-tile yellow"><div class="kv" id="ex_kpi_peak">—</div><div class="kl">Peak Demand Year</div><div class="ks" id="ex_kpi_peak_sub">—</div></div>
       <div class="kpi-tile purple"><div class="kv" id="ex_kpi_actions">—</div><div class="kl">Actions Open</div><div class="ks" id="ex_kpi_actions_sub">—</div></div>
       <div class="kpi-tile teal"><div class="kv" id="ex_kpi_ramp">—</div><div class="kl">Ramp-Up Status</div><div class="ks" id="ex_kpi_ramp_sub">—</div></div>
@@ -670,6 +697,7 @@ input[type=number].ni{text-align:right;}
       <div class="card ylw" style="margin-bottom:0"><h2>📈 Demand Forecast</h2><div class="sub">Total units by year (ship dates).</div><div class="demand-bars" id="ex_demand_bars"></div></div>
     </div>
     <div class="card red"><h2>🏭 Capacity Status</h2><div class="sub" id="ex_cap_sub">—<span class="lt-on-badge">⏳ PHASE LT ADJ</span></div><div class="tbl-wrap"><table><thead><tr><th>Department</th><th>Type</th><th class="r">Net Avail Hrs</th><th class="r">Source</th><th class="r">Worst Util%</th><th>First At Risk</th><th>Status</th></tr></thead><tbody id="ex_dept_tbody"></tbody></table></div></div>
+    <div class="card pur"><h2>⚙ Machine &amp; Equipment Constraints</h2><div class="sub">Current installed capacity and the dated recovery plan are evaluated independently from labor.</div><div id="ex_eq_summary"></div></div>
     <div class="g2" style="margin-bottom:16px">
       <div class="card tel" style="margin-bottom:0"><h2>📦 Peak Year MLI Breakdown</h2><div class="sub" id="ex_mli_sub">—</div><div id="ex_mli_breakdown"></div></div>
       <div class="card red" style="margin-bottom:0"><h2>⚠ Top Risks</h2><div class="sub">Auto-identified.</div><div id="ex_risk_panel"></div></div>
@@ -703,6 +731,10 @@ var sfVisible=false,dwVisible=false;
 var leadTimeAdjust=false;
 var ltSpreadMode=false;
 var LT_SPREAD_CACHE=null;
+var EQ_SPREAD_CACHE=null;
+var EQ_METRIC_CACHE=null;
+var equipmentConfig=[];
+var equipmentC=0;
 var MLI_COLORS=['#4299e1','#48bb78','#ed8936','#e53e3e','#805ad5','#319795','#d53f8c','#d69e2e','#667eea','#f6ad55','#68d391','#fc8181'];
 var PHASE_COLORS=['#4299e1','#ed8936','#48bb78','#9f7aea','#f56565','#38b2ac','#ed64a6','#ecc94b','#667eea','#fc8181'];
 var PHASE_DEFAULTS=[{name:'Engineering',startWk:35,endWk:15},{name:'Procurement',startWk:30,endWk:5},{name:'Manufacturing',startWk:10,endWk:0}];
@@ -896,7 +928,7 @@ function toggleLTSpreadMode(){
   invalidateLTSpreadCache();
   rebuildAllResBars();recalc();autoSave();
 }
-function invalidateLTSpreadCache(){LT_SPREAD_CACHE=null;}
+function invalidateLTSpreadCache(){LT_SPREAD_CACHE=null;EQ_SPREAD_CACHE=null;EQ_METRIC_CACHE=null;}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LT SPREAD ENGINE — distributes each delivery's hours evenly across every
@@ -1303,6 +1335,97 @@ function getDeptLoadAnnual(di,yi){
   for(var j=0;j<STATE.mlis.length;j++)tot+=getDemAnnualAdjustedForDept(j,di,yi)*getSH(j,di)*rwk*(isOff?getCF(j,di):1);
   return tot;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MACHINE & EQUIPMENT CAPACITY — a parallel constraint to department labor.
+// Equipment routing hours are never added to labor hours. Each resource is
+// evaluated against its own installed and planned net machine-hour capacity.
+// ─────────────────────────────────────────────────────────────────────────────
+function firstEquipmentDept(){for(var i=0;i<STATE.depts.length;i++)if(STATE.depts[i].type!=='wh')return i;return 0;}
+function makeEquipment(raw){
+  raw=raw&&typeof raw==='object'?raw:{};
+  var di=clampNum(raw.dept,0,Math.max(STATE.depts.length-1,0),firstEquipmentDept());
+  if(STATE.depts[di]&&STATE.depts[di].type==='wh')di=firstEquipmentDept();
+  var routing=[];for(var mi=0;mi<STATE.mlis.length;mi++){var rv=Array.isArray(raw.routing)?raw.routing[mi]:raw.routing&&raw.routing['m'+mi];routing.push(clampNum(rv,0,1000000,0));}
+  var ph=raw.planHrs===undefined||raw.planHrs===null||raw.planHrs===''?'':clampNum(raw.planHrs,0,8760,0);
+  var po=raw.planOee===undefined||raw.planOee===null||raw.planOee===''?'':clampNum(raw.planOee,0,100,0);
+  var date=/^\d{4}-\d{2}-\d{2}$/.test(String(raw.planDate||''))?String(raw.planDate):'';
+  return{id:'eq'+(equipmentC++),name:cleanText(raw.name||('Equipment Group '+(equipmentC)),120),dept:di,count:clampNum(raw.count,0,100000,1),hrs:clampNum(raw.hrs,0,8760,2000),oee:clampNum(raw.oee,0,100,85),add:clampNum(raw.add,0,100000,0),planHrs:ph,planOee:po,relief:clampNum(raw.relief,0,100,0),planDate:date,sqft:clampNum(raw.sqft,0,10000000,0),source:cleanText(raw.source,200),note:cleanText(raw.note,500),routing:routing};
+}
+function normalizeEquipmentConfig(raw){equipmentC=0;if(!Array.isArray(raw))return[];return raw.slice(0,200).map(function(e){return makeEquipment(e);});}
+function eqEl(e,key){return document.getElementById('eq_'+e.id+'_'+key);}
+function syncEquipmentFromDOM(){
+  equipmentConfig.forEach(function(e){
+    var name=eqEl(e,'name'),dept=eqEl(e,'dept'),count=eqEl(e,'count'),hrs=eqEl(e,'hrs'),oee=eqEl(e,'oee'),add=eqEl(e,'add'),planHrs=eqEl(e,'planhrs'),planOee=eqEl(e,'planoee'),relief=eqEl(e,'relief'),date=eqEl(e,'date'),sqft=eqEl(e,'sqft'),source=eqEl(e,'source'),note=eqEl(e,'note');
+    if(name)e.name=cleanText(name.value,120);if(dept)e.dept=clampNum(dept.value,0,STATE.depts.length-1,firstEquipmentDept());
+    if(count)e.count=clampNum(count.value,0,100000,0);if(hrs)e.hrs=clampNum(hrs.value,0,8760,0);if(oee)e.oee=clampNum(oee.value,0,100,0);
+    if(add)e.add=clampNum(add.value,0,100000,0);if(planHrs)e.planHrs=planHrs.value===''?'':clampNum(planHrs.value,0,8760,0);if(planOee)e.planOee=planOee.value===''?'':clampNum(planOee.value,0,100,0);
+    if(relief)e.relief=clampNum(relief.value,0,100,0);if(date)e.planDate=/^\d{4}-\d{2}-\d{2}$/.test(date.value)?date.value:'';if(sqft)e.sqft=clampNum(sqft.value,0,10000000,0);
+    if(source)e.source=cleanText(source.value,200);if(note)e.note=cleanText(note.value,500);
+    for(var mi=0;mi<STATE.mlis.length;mi++){var rt=document.getElementById('eq_rt_'+e.id+'_m'+mi);if(rt)e.routing[mi]=clampNum(rt.value,0,1000000,0);}
+  });
+}
+function addEquipment(raw){if(!STATE.generated)return;syncEquipmentFromDOM();equipmentConfig.push(makeEquipment(raw||{}));EQ_METRIC_CACHE=null;buildPEq();updateNavDots();autoSave();}
+function deleteEquipment(id){var e=equipmentConfig.find(function(x){return x.id===id;});if(!e)return;if(!confirm('Delete equipment group "'+e.name+'" and its routing data?'))return;equipmentConfig=equipmentConfig.filter(function(x){return x.id!==id;});EQ_SPREAD_CACHE=null;EQ_METRIC_CACHE=null;buildPEq();renderEqGoverning();renderEquipmentFootprint();updateNavDots();autoSave();}
+function equipmentChanged(){syncEquipmentFromDOM();EQ_SPREAD_CACHE=null;EQ_METRIC_CACHE=null;renderEquipmentResults();renderEqGoverning();renderEquipmentFootprint();updateNavDots();autoSave();}
+function getEqPlanStartAbs(e){if(!e||!e.planDate)return null;var m=e.planDate.match(/^(\d{4})-(\d{2})-/);if(!m)return null;return(parseInt(m[1])-STATE.startYr)*12+(parseInt(m[2])-1);}
+function eqHasPlanValues(e){return e.add>0||e.planHrs!==''||e.planOee!==''||e.relief>0;}
+function eqPlanActive(e,absMo){var start=getEqPlanStartAbs(e);return eqHasPlanValues(e)&&start!==null&&absMo>=start;}
+function getEqCurrentAnnualCapacity(ei){var e=equipmentConfig[ei];return e?e.count*e.hrs*(e.oee/100):0;}
+function getEqAnnualCapacityAt(ei,absMo,planned){var e=equipmentConfig[ei];if(!e)return 0;if(!planned||!eqPlanActive(e,absMo))return getEqCurrentAnnualCapacity(ei);var qty=e.count+e.add,hrs=e.planHrs===''?e.hrs:e.planHrs,oee=e.planOee===''?e.oee:e.planOee;return qty*hrs*(oee/100);}
+function getEqCapacity(ei,yi,pi,planned){
+  var start=yi*12,end=start+12;if(pi!==undefined){if(RESOLUTION==='monthly'){start+=pi;end=start+1;}else if(RESOLUTION==='quarterly'){start+=pi*3;end=start+3;}}
+  var total=0;for(var abs=start;abs<end;abs++)total+=getEqAnnualCapacityAt(ei,abs,planned)/12;return total;
+}
+function buildEqSpreadCache(){
+  var cache={_clippedTotal:0};if(!STATE.generated||!leadTimeAdjust||!ltSpreadMode)return cache;var nMo=STATE.years.length*12;
+  equipmentConfig.forEach(function(e,ei){
+    var monthly=new Array(nMo).fill(0),di=e.dept,rwk=1+getRwk(di)/100;
+    for(var mi=0;mi<STATE.mlis.length;mi++){
+      var rt=clampNum(e.routing[mi],0,1000000,0);if(rt<=0)continue;
+      var ltRes=getLTForDept(mi,di,true),phase=ltRes.status==='ok'?ltRes.phase:null,startWk=phase?Number(phase.startWk):0,endWk=phase?Number(phase.endWk):0,durWks=startWk-endWk;
+      for(var yi=0;yi<STATE.years.length;yi++)for(var mo=0;mo<12;mo++){
+        var dem=getDemMonthly(mi,yi,mo);if(dem<=0)continue;var hrs=dem*rt*rwk,delivery=yi*12+mo,allocated=0;
+        if(ltRes.status==='ok')allocated=spreadHoursIntoMonthly(hrs,durWks,startWk,endWk,delivery,monthly,nMo);else if(delivery>=0&&delivery<nMo){monthly[delivery]+=hrs;allocated=hrs;}
+        cache._clippedTotal+=Math.max(0,hrs-allocated);
+      }
+    }
+    cache[ei]=monthly;
+  });return cache;
+}
+function getEqRawLoadMonthly(ei,absMo){
+  var e=equipmentConfig[ei];if(!e||absMo<0||absMo>=STATE.years.length*12)return 0;
+  if(leadTimeAdjust&&ltSpreadMode){if(!EQ_SPREAD_CACHE)EQ_SPREAD_CACHE=buildEqSpreadCache();return EQ_SPREAD_CACHE[ei]?EQ_SPREAD_CACHE[ei][absMo]||0:0;}
+  var yi=Math.floor(absMo/12),mo=absMo%12,tot=0,rwk=1+getRwk(e.dept)/100;
+  for(var mi=0;mi<STATE.mlis.length;mi++){var dem=leadTimeAdjust?getDemMonthlyAdjustedForDept(mi,e.dept,yi,mo):getDemMonthly(mi,yi,mo);tot+=dem*clampNum(e.routing[mi],0,1000000,0)*rwk;}return tot;
+}
+function getEqClippedHours(){
+  if(!STATE.generated||!leadTimeAdjust)return 0;if(ltSpreadMode){if(!EQ_SPREAD_CACHE)EQ_SPREAD_CACHE=buildEqSpreadCache();return EQ_SPREAD_CACHE._clippedTotal||0;}
+  var clipped=0;equipmentConfig.forEach(function(e){var rwk=1+getRwk(e.dept)/100;for(var mi=0;mi<STATE.mlis.length;mi++){var rt=e.routing[mi]||0,lt=getLTForDept(mi,e.dept,true);if(rt<=0||lt.status!=='ok')continue;var back=Math.round(lt.shiftWks/LT_SPREAD_MO_WKS);for(var yi=0;yi<STATE.years.length;yi++)for(var mo=0;mo<12;mo++){var dem=getDemMonthly(mi,yi,mo);if(dem>0&&yi*12+mo-back<0)clipped+=dem*rt*rwk;}}});return clipped;
+}
+function getEqLoad(ei,yi,pi,planned){
+  var e=equipmentConfig[ei],start=yi*12,end=start+12;if(!e)return 0;
+  if(pi!==undefined){if(RESOLUTION==='monthly'){start+=pi;end=start+1;}else if(RESOLUTION==='quarterly'){start+=pi*3;end=start+3;}}
+  var total=0;for(var abs=start;abs<end;abs++){var load=getEqRawLoadMonthly(ei,abs);if(planned&&eqPlanActive(e,abs))load*=1-e.relief/100;total+=load;}return total;
+}
+function eqUtil(load,cap){return cap>0?load/cap*100:load>0?Infinity:0;}
+function fmtEqUtil(u){return u===Infinity?'No Cap':fmtP(u);}
+function eqUtilClass(u){return u===Infinity?'cr':rag(u);}
+function getEqColumns(){var cols=[],Y=STATE.years,periods=getPeriods(),pc=getPeriodCount();if(RESOLUTION==='annual'){for(var y=0;y<Y.length;y++)cols.push({label:String(Y[y]),yi:y,pi:undefined});}else for(var y=0;y<Y.length;y++)for(var p=0;p<pc;p++)cols.push({label:Y[y]+' '+periods[p],yi:y,pi:p});return cols;}
+function getEqPeriodMetrics(ei,c){
+  var e=equipmentConfig[ei],start=c.yi*12,end=start+12;if(c.pi!==undefined){if(RESOLUTION==='monthly'){start+=c.pi;end=start+1;}else if(RESOLUTION==='quarterly'){start+=c.pi*3;end=start+3;}}
+  var cl=0,pl=0,cc=0,pc=0;for(var abs=start;abs<end;abs++){var raw=getEqRawLoadMonthly(ei,abs);cl+=raw;pl+=eqPlanActive(e,abs)?raw*(1-e.relief/100):raw;cc+=getEqAnnualCapacityAt(ei,abs,false)/12;pc+=getEqAnnualCapacityAt(ei,abs,true)/12;}
+  return{currentLoad:cl,planLoad:pl,currentCap:cc,planCap:pc,currentUtil:eqUtil(cl,cc),planUtil:eqUtil(pl,pc)};
+}
+function getEqMetrics(ei){
+  if(!EQ_METRIC_CACHE||EQ_METRIC_CACHE.resolution!==RESOLUTION)EQ_METRIC_CACHE={resolution:RESOLUTION,items:{}};if(EQ_METRIC_CACHE.items[ei])return EQ_METRIC_CACHE.items[ei];
+  var cols=getEqColumns(),currentWorst={util:0,load:0,cap:0,label:'--'},planWorst={util:0,load:0,cap:0,label:'--'},periods=[];cols.forEach(function(c){var m=getEqPeriodMetrics(ei,c);periods.push(m);if(m.currentUtil===Infinity||m.currentUtil>currentWorst.util)currentWorst={util:m.currentUtil,load:m.currentLoad,cap:m.currentCap,label:c.label};if(m.planUtil===Infinity||m.planUtil>planWorst.util)planWorst={util:m.planUtil,load:m.planLoad,cap:m.planCap,label:c.label};});return EQ_METRIC_CACHE.items[ei]={cols:cols,periods:periods,currentWorst:currentWorst,planWorst:planWorst};
+}
+function getEqWorst(ei,planned){var m=getEqMetrics(ei);return planned?m.planWorst:m.currentWorst;}
+function getEquipmentIssues(){
+  var issues=[];equipmentConfig.forEach(function(e,ei){var label=e.name||('Equipment '+(ei+1)),routed=e.routing.some(function(v){return v>0;});if(!e.name.trim())issues.push('Equipment group '+(ei+1)+' needs a name');if(!routed)issues.push(label+': no product routing hours');if(getEqCurrentAnnualCapacity(ei)<=0&&routed)issues.push(label+': routed demand but zero installed capacity');if(!e.source.trim())issues.push(label+': capacity source is missing');if(eqHasPlanValues(e)&&!e.planDate)issues.push(label+': plan values need an in-service date');if(e.add>0&&e.sqft<=0)issues.push(label+': planned addition needs installed sq ft/machine');});
+  for(var di=0;di<STATE.depts.length;di++)if(sv('con_d'+di)==='Equipment'&&!equipmentConfig.some(function(e){return e.dept===di;}))issues.push(STATE.depts[di].name+': Equipment is selected as the constraint but no equipment group is assigned');return issues;
+}
 function calcFpAreaMonthly(di,yi,mo){
   var workDaysPerMonth=getWorkDays()/12,plf=getPLF(),total=0,totalAvg=0,totalPeak=0,mliD={};
   for(var j=0;j<STATE.mlis.length;j++){
@@ -1407,7 +1530,7 @@ function updateSubAnnualTotals(res){
 }
 function rebuildAllResBars(){
   if(document.getElementById('res_input_p1'))buildResBar('res_input_p1',true);
-  ['res_output_p5','res_output_p6','res_output_p7','res_output_p8','res_output_p9'].forEach(function(id){if(document.getElementById(id))buildResBar(id,false);});
+  ['res_output_pEq','res_output_p5','res_output_p6','res_output_p7','res_output_p8','res_output_p9'].forEach(function(id){if(document.getElementById(id))buildResBar(id,false);});
 }
 function buildResBar(cid,inputMode){
   var el=document.getElementById(cid);if(!el)return;
@@ -1967,7 +2090,7 @@ function updateRecoveryPlanSummary(){
 // ─────────────────────────────────────────────────────────────────────────────
 function updateHeader(){
   var sup=sv('cfg_supplier');
-  setText('hdr_title',(sup?sup+' \u2014 ':'')+'Capacity & Engineering Workbook v6.77');
+  setText('hdr_title',(sup?sup+' \u2014 ':'')+'Capacity & Engineering Workbook v6.78');
   setText('hdr_sub','Capacity Planning'+(sv('cfg_program')?' | '+sv('cfg_program'):''));
   setText('hdr_date',sv('cfg_date'));setText('hdr_auditor',sv('cfg_auditor')?'Auditor: '+sv('cfg_auditor'):'');
 }
@@ -1977,9 +2100,10 @@ function updateNavDots(){
   var hasCap=false;for(var i=0;i<STATE.depts.length&&!hasCap;i++)if(STATE.depts[i].type!=='wh'&&gv('fte_d'+i)>0)hasCap=true;
   var hasSH=false;for(var i=0;i<STATE.depts.length&&!hasSH;i++)for(var j=0;j<STATE.mlis.length&&!hasSH;j++)if(getSH(j,i)>0)hasSH=true;
   var hasOEE=false;for(var i=0;i<STATE.depts.length&&!hasOEE;i++)if(getOEE(i)!==null)hasOEE=true;
+  var hasEq=equipmentConfig.length>0&&equipmentConfig.some(function(e){return e.routing.some(function(v){return v>0;});});
   var hasSc=false;for(var i=0;i<STATE.depts.length&&!hasSc;i++)if(sv('ramp_sc_d'+i)&&sv('ramp_sc_d'+i)!=='-- Select --')hasSc=true;
   function setDot(id,on){var el=document.getElementById(id);if(el)el.classList.toggle('on',on);}
-  setDot('dot_p1',hasDem);setDot('dot_p2',hasCap);setDot('dot_p3',hasSH);setDot('dot_p4',hasOEE);setDot('dot_p7',hasSc);
+  setDot('dot_p1',hasDem);setDot('dot_p2',hasCap);setDot('dot_p3',hasSH);setDot('dot_p4',hasOEE);setDot('dot_pEq',hasEq);setDot('dot_p7',hasSc);
   var alO=parseInt(sv('al_o')||'0');setDot('dot_p10',alO>0);
   updateLTNavBadge();
 }
@@ -2038,7 +2162,7 @@ function generateWorkbook(preserveConfig){
   STATE.clItems=[];document.querySelectorAll('#cl_cfg_list div input').forEach(function(el){if(el.value.trim())STATE.clItems.push(cleanText(el.value.trim(),200));});
   if(!STATE.mlis.length||!STATE.depts.length){alert('Please add at least one product line and one process step.');return;}
   STATE.generated=true;
-  if(preserveConfig!==true){RESOLUTION='annual';wfView='summary';rampMetric={};sfVisible=false;dwVisible=false;leadTimeAdjust=false;ltSpreadMode=false;ltConfig={phases:{},deptMap:{}};activeLTMli=0;loadYearSel='';loadPeriodSel='';}
+  if(preserveConfig!==true){RESOLUTION='annual';wfView='summary';rampMetric={};sfVisible=false;dwVisible=false;leadTimeAdjust=false;ltSpreadMode=false;ltConfig={phases:{},deptMap:{}};equipmentConfig=[];equipmentC=0;activeLTMli=0;loadYearSel='';loadPeriodSel='';}
   if(activeLTMli>=STATE.mlis.length)activeLTMli=0;
   // Initialise ltConfig
   for(var mi=0;mi<STATE.mlis.length;mi++){
@@ -2058,7 +2182,7 @@ function generateWorkbook(preserveConfig){
     }
   }
   setText('hdr_badge','LIVE DRAFT');document.getElementById('hdr_badge').style.background='#38a169';
-  updateHeader();buildP1();buildP2();buildP3();buildP4();buildP5();buildP6();buildP7();buildP8();buildP9();buildP10();
+  updateHeader();buildP1();buildP2();buildP3();buildP4();buildPEq();buildP5();buildP6();buildP7();buildP8();buildP9();buildP10();
   document.getElementById('exec_not_generated').style.display='none';document.getElementById('exec_content').style.display='block';
   runLTValidation();updateLTNavBadge();
   recalc();attachAllListeners();
@@ -2101,8 +2225,8 @@ function buildP2(){
 }
 function buildP3(){
   var D=STATE.depts,M=STATE.mlis;
-  var html='<div class="card red"><h2>Standard Hours Per Unit</h2><div class="sub">Confirm with ERP routing. <span class="cf-badge">CF%</span> = Copy Factor for Office depts.</div><div class="tbl-wrap"><table><thead><tr><th>Department</th>';
-  for(var j=0;j<M.length;j++)html+='<th class="r">'+escH(M[j].code)+' Std Hrs</th>';
+  var html='<div class="card red"><h2>Labor Standard Hours Per Unit</h2><div class="sub">Department labor content; machine occupation hours are entered separately on Machines &amp; Equipment. <span class="cf-badge">CF%</span> = Copy Factor for Office depts.</div><div class="tbl-wrap"><table><thead><tr><th>Department</th>';
+  for(var j=0;j<M.length;j++)html+='<th class="r">'+escH(M[j].code)+' Labor Hrs</th>';
   html+='<th>Source</th></tr><tr style="background:#2d3748"><td style="background:#2d3748;color:#a0aec0;font-size:10px">CF% (Office only)</td>';
   for(var j=0;j<M.length;j++)html+='<td style="background:#3c366b;color:#e9d8fd;font-size:10px;text-align:right">'+escH(M[j].code)+' CF%</td>';
   html+='<td style="background:#2d3748"></td></tr></thead><tbody>';
@@ -2131,7 +2255,7 @@ function buildP3(){
 }
 function buildP4(){
   var D=STATE.depts;
-  var html='<div class="infobox ib-y"><b>OEE is optional.</b> Enter A%, P%, Q% to override manual efficiency.</div>';
+  var html='<div class="infobox ib-y"><b>Department OEE is optional.</b> Enter A%, P%, Q% to override manual labor-capacity efficiency. Equipment groups use their own OEE on the Machines &amp; Equipment tab.</div>';
   html+='<div class="card"><h2>Efficiency &amp; Availability Factors</h2><div class="tbl-wrap"><table><thead><tr><th>Department</th><th class="r">Base Hrs</th><th class="r">Holiday/Vac%</th><th class="r">Planned DT%</th><th class="r">Unplanned DT%</th><th class="r">Training%</th><th class="r">Rework%</th><th class="r">Net Eff%</th><th class="r">Net Avail Hrs</th></tr></thead><tbody>';
   for(var i=0;i<D.length;i++){
     var d=D[i];if(d.type==='wh')continue;
@@ -2151,6 +2275,62 @@ function buildP4(){
   }
   html+='</tbody></table></div></div>';setHTML('p4_content',html);
 }
+function buildPEq(){
+  var D=STATE.depts,M=STATE.mlis,deptOpts='';for(var di=0;di<D.length;di++)if(D[di].type!=='wh')deptOpts+='<option value="'+di+'">'+deptIcon(D[di].type)+escH(D[di].name)+'</option>';
+  var html='<div id="res_output_pEq"></div>';
+  html+='<div class="infobox ib-b"><b>Parallel constraint:</b> machine hours are evaluated independently from labor hours. A green labor result does not clear a constrained mill, oven, test stand, or other shared asset.</div>';
+  html+='<div id="eq_issue_banner"></div>';
+  html+='<div class="eq-stat-grid"><div class="eq-stat"><div class="v" id="eq_stat_groups">0</div><div class="l">Equipment Groups</div></div><div class="eq-stat"><div class="v" id="eq_stat_current">0</div><div class="l">Current Groups At Risk</div></div><div class="eq-stat"><div class="v" id="eq_stat_plan">0</div><div class="l">Planned Groups At Risk</div></div><div class="eq-stat"><div class="v" id="eq_stat_sqft">0 sq ft</div><div class="l">Installed Equipment Footprint</div></div></div>';
+  html+='<div class="card pur"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h2>Machine &amp; Equipment Groups</h2><div class="sub">Capacity = quantity × scheduled hours per machine per year × equipment OEE.</div></div><button class="btn btn-pu" onclick="addEquipment()">+ Add Equipment Group</button></div>';
+  if(!equipmentConfig.length)html+='<div class="eq-empty"><div class="icon">⚙</div><b>No constrained equipment modeled yet.</b><div style="margin-top:5px">Add a group for mills, lathes, ovens, test stands, paint booths, CMMs, or any other finite shared asset.</div></div>';
+  else{
+    html+='<div class="tbl-wrap"><table class="eq-config-table"><thead><tr><th>Equipment Group</th><th>Department</th><th class="r">Installed Qty</th><th class="r">Scheduled Hrs/Machine/Yr</th><th class="r">Equipment OEE%</th><th class="r">Current Net Hrs/Yr</th><th class="r">Planned Add Qty</th><th class="r">Planned Hrs/Machine/Yr</th><th class="r">Planned OEE%</th><th class="r">Load Relief%</th><th>In-Service Date</th><th class="r">Installed Sq Ft/Machine</th><th>Source</th><th>Notes</th><th></th></tr></thead><tbody>';
+    equipmentConfig.forEach(function(e,ei){
+      html+='<tr class="row-prod"><td><input class="ni eq-name" id="eq_'+e.id+'_name" value="'+escH(e.name)+'" oninput="equipmentChanged()"></td><td><select class="ni" id="eq_'+e.id+'_dept" onchange="equipmentChanged()">'+deptOpts+'</select></td>';
+      html+='<td><input class="ni" type="number" min="0" id="eq_'+e.id+'_count" value="'+e.count+'" oninput="equipmentChanged()"></td><td><input class="ni" type="number" min="0" max="8760" id="eq_'+e.id+'_hrs" value="'+e.hrs+'" oninput="equipmentChanged()"></td><td><input class="ni" type="number" min="0" max="100" step="0.1" id="eq_'+e.id+'_oee" value="'+e.oee+'" oninput="equipmentChanged()"></td><td class="r"><span class="eq-cap" id="eq_'+e.id+'_currentcap">--</span></td>';
+      html+='<td><input class="ni" type="number" min="0" id="eq_'+e.id+'_add" value="'+e.add+'" oninput="equipmentChanged()"></td><td><input class="ni" type="number" min="0" max="8760" placeholder="Same" id="eq_'+e.id+'_planhrs" value="'+(e.planHrs===''?'':e.planHrs)+'" oninput="equipmentChanged()"></td><td><input class="ni" type="number" min="0" max="100" step="0.1" placeholder="Same" id="eq_'+e.id+'_planoee" value="'+(e.planOee===''?'':e.planOee)+'" oninput="equipmentChanged()"></td><td><input class="ni" type="number" min="0" max="100" step="0.1" id="eq_'+e.id+'_relief" value="'+e.relief+'" oninput="equipmentChanged()"></td><td><input class="ni" type="date" id="eq_'+e.id+'_date" value="'+escH(e.planDate)+'" oninput="equipmentChanged()"><div class="eq-warning" id="eq_'+e.id+'_planwarn"></div></td>';
+      html+='<td><input class="ni" type="number" min="0" id="eq_'+e.id+'_sqft" value="'+e.sqft+'" oninput="equipmentChanged()"></td><td><input class="ni" id="eq_'+e.id+'_source" value="'+escH(e.source)+'" placeholder="e.g. asset register" oninput="equipmentChanged()"></td><td><input class="ni eq-note" id="eq_'+e.id+'_note" value="'+escH(e.note)+'" oninput="equipmentChanged()"></td><td><button class="del-btn" onclick="deleteEquipment(\''+e.id+'\')">X</button></td></tr>';
+    });html+='</tbody></table></div>';
+  }
+  html+='</div>';
+  if(equipmentConfig.length){
+    html+='<div class="card org"><h2>Machine-Hour Routing Per Unit</h2><div class="sub">Enter actual machine occupation/run hours per finished unit. Department rework is applied to required machine hours.</div><div class="tbl-wrap"><table><thead><tr><th>Equipment Group</th>';
+    for(var mi=0;mi<M.length;mi++)html+='<th class="r">'+escH(M[mi].code)+' Machine Hrs/Unit</th>';html+='</tr></thead><tbody>';
+    equipmentConfig.forEach(function(e){html+='<tr class="row-prod"><td><strong>'+escH(e.name)+'</strong></td>';for(var mi=0;mi<M.length;mi++)html+='<td><input class="ni" type="number" min="0" step="0.01" id="eq_rt_'+e.id+'_m'+mi+'" value="'+(e.routing[mi]||'')+'" placeholder="0" oninput="equipmentChanged()" style="text-align:right"></td>';html+='</tr>';});html+='</tbody></table></div></div>';
+    html+='<div class="card"><h2>Equipment Utilization <span class="tag tag-p">Current → Plan</span></h2><div class="sub">Plan utilization uses dated additions, hours, OEE, and load relief. RAG is based on the current installed constraint.</div><div class="tbl-wrap" id="eq_util_wrap"></div></div>';
+    html+='<div class="card pur"><h2>Department Governing Constraint</h2><div class="sub">Compares labor with every routed equipment group assigned to the department.</div><div id="eq_gov_wrap"></div></div>';
+  }
+  setHTML('pEq_content',html);
+  equipmentConfig.forEach(function(e){var sel=eqEl(e,'dept');if(sel)sel.value=String(e.dept);});
+  buildResBar('res_output_pEq',false);renderEquipmentResults();renderEqGoverning();
+}
+function renderEquipmentResults(){
+  if(!STATE.generated)return;syncEquipmentFromDOM();
+  var issues=getEquipmentIssues(),clipped=getEqClippedHours(),banner=document.getElementById('eq_issue_banner');if(banner)banner.innerHTML=!equipmentConfig.length?'':(issues.length||clipped>0)?'<div class="infobox ib-y"><b>⚠ Equipment model review:</b> '+issues.slice(0,8).map(escH).join(' · ')+(issues.length>8?' · …':'')+(clipped>0?(issues.length?' · ':'')+fmt(Math.round(clipped))+' machine hours fall before the forecast horizon':'')+'</div>':'<div class="infobox ib-g"><b>✓ Equipment inputs are structurally complete.</b> Validate sources and routing assumptions before release.</div>';
+  var currentRisk=0,planRisk=0,totalSq=0;equipmentConfig.forEach(function(e,ei){
+    totalSq+=e.count*e.sqft;var cw=getEqWorst(ei,false),pw=getEqWorst(ei,true);if(cw.util>=85)currentRisk++;if(pw.util>=85)planRisk++;
+    setText('eq_'+e.id+'_currentcap',fmt(Math.round(getEqCurrentAnnualCapacity(ei)))+' hrs');var warn=document.getElementById('eq_'+e.id+'_planwarn');if(warn)warn.textContent=eqHasPlanValues(e)&&!e.planDate?'Date required':'';
+  });
+  setText('eq_stat_groups',equipmentConfig.length);setText('eq_stat_current',currentRisk);setText('eq_stat_plan',planRisk);setText('eq_stat_sqft',fmt(Math.round(totalSq))+' sq ft');
+  var wrap=document.getElementById('eq_util_wrap');if(!wrap)return;var cols=getEqColumns(),html='<table><thead><tr><th>Equipment Group</th><th>Department</th>';
+  cols.forEach(function(c){html+='<th class="r">'+c.label+'</th>';});html+='<th class="r">Worst Current</th><th class="r">Worst Plan</th></tr></thead><tbody>';
+  equipmentConfig.forEach(function(e,ei){var metrics=getEqMetrics(ei),cw=metrics.currentWorst,pw=metrics.planWorst;html+='<tr class="row-prod"><td><strong>⚙ '+escH(e.name)+'</strong></td><td>'+escH(STATE.depts[e.dept]?STATE.depts[e.dept].name:'--')+'</td>';metrics.periods.forEach(function(m){html+='<td class="r '+eqUtilClass(m.currentUtil)+'"><strong>'+fmtEqUtil(m.currentUtil)+'</strong>'+(eqHasPlanValues(e)?'<div class="eq-plan">Plan '+fmtEqUtil(m.planUtil)+'</div>':'')+'</td>';});html+='<td class="r '+eqUtilClass(cw.util)+'"><strong>'+fmtEqUtil(cw.util)+'</strong><div class="eq-plan">'+cw.label+'</div></td><td class="r '+eqUtilClass(pw.util)+'"><strong>'+fmtEqUtil(pw.util)+'</strong><div class="eq-plan">'+pw.label+'</div></td></tr>';});
+  wrap.innerHTML=html+'</tbody></table>';
+}
+function getLaborWorstForDept(di){var cols=getEqColumns(),best={util:0,label:'--'};cols.forEach(function(c){var cap=RESOLUTION==='annual'?getNetAvail(di):getPeriodCap(getNetAvail(di)),u=eqUtil(getDeptLoad(di,c.yi,c.pi),cap);if(u===Infinity||u>best.util)best={util:u,label:c.label};});return best;}
+function renderEqGoverning(targetId){
+  var targets=targetId?[targetId]:['eq_gov_wrap','util_eq_gov_wrap'];targets.forEach(function(id){var el=document.getElementById(id);if(!el)return;if(!equipmentConfig.length){el.innerHTML='<div class="eq-empty"><b>No equipment groups configured.</b> <button class="btn btn-pu" onclick="guideGo(\'pEq\',\'nav_pEq\')">Add Equipment</button></div>';return;}
+    var html='<div class="tbl-wrap"><table><thead><tr><th>Department</th><th class="r">Worst Labor</th><th class="r">Worst Equipment</th><th>Equipment Driver</th><th>Current Governing Constraint</th><th>Planned Governing Constraint</th></tr></thead><tbody>';
+    for(var di=0;di<STATE.depts.length;di++){if(STATE.depts[di].type==='wh')continue;var labor=getLaborWorstForDept(di),eqBest={util:0,name:'--'},eqPlan={util:0,name:'--'},hasEq=false;equipmentConfig.forEach(function(e,ei){if(e.dept!==di||!e.routing.some(function(v){return v>0;}))return;hasEq=true;var w=getEqWorst(ei,false),p=getEqWorst(ei,true);if(w.util===Infinity||w.util>eqBest.util)eqBest={util:w.util,name:e.name};if(p.util===Infinity||p.util>eqPlan.util)eqPlan={util:p.util,name:e.name};});var currentType=hasEq&&(eqBest.util===Infinity||eqBest.util>labor.util)?'equipment':labor.util>0?'labor':'none',currentName=currentType==='equipment'?eqBest.name:currentType==='labor'?'Labor':'No load';var planType=hasEq&&(eqPlan.util===Infinity||eqPlan.util>labor.util)?'equipment':labor.util>0?'labor':'none',planName=planType==='equipment'?eqPlan.name:planType==='labor'?'Labor':'No load';html+='<tr'+deptRowClass(STATE.depts[di].type)+'><td><strong>'+deptIcon(STATE.depts[di].type)+escH(STATE.depts[di].name)+'</strong></td><td class="r '+eqUtilClass(labor.util)+'">'+fmtEqUtil(labor.util)+'</td><td class="r '+(hasEq?eqUtilClass(eqBest.util):'')+'">'+(hasEq?fmtEqUtil(eqBest.util):'--')+'</td><td>'+escH(hasEq?eqBest.name:'--')+'</td><td><span class="eq-gov '+currentType+'">'+(currentType==='equipment'?'⚙ ':'👥 ')+escH(currentName)+'</span></td><td><span class="eq-gov '+planType+'">'+(planType==='equipment'?'⚙ ':'👥 ')+escH(planName)+'</span></td></tr>';}
+    el.innerHTML=html+'</tbody></table></div>';
+  });
+}
+function renderExecEquipmentSummary(){
+  var el=document.getElementById('ex_eq_summary');if(!el)return;if(!equipmentConfig.length){el.innerHTML='<div class="eq-empty"><b>No constrained equipment has been modeled.</b></div>';return;}syncEquipmentFromDOM();
+  var html='<div class="tbl-wrap"><table><thead><tr><th>Equipment Group</th><th>Department</th><th class="r">Installed Qty</th><th class="r">Current Net Hrs/Yr</th><th class="r">Worst Current</th><th class="r">Worst Plan</th><th>Plan Effective</th><th>Status</th></tr></thead><tbody>';
+  equipmentConfig.forEach(function(e,ei){var cw=getEqWorst(ei,false),pw=getEqWorst(ei,true),st=cw.util===Infinity||cw.util>100?'<span class="tag tag-r">Constrained</span>':cw.util>=85?'<span class="tag tag-y">At Risk</span>':cw.util>0?'<span class="tag tag-g">OK</span>':'<span class="tag tag-b">No Load</span>';html+='<tr class="row-prod"><td><strong>⚙ '+escH(e.name)+'</strong></td><td>'+escH(STATE.depts[e.dept]?STATE.depts[e.dept].name:'--')+'</td><td class="r">'+fmt(e.count)+'</td><td class="r">'+fmt(Math.round(getEqCurrentAnnualCapacity(ei)))+'</td><td class="r '+eqUtilClass(cw.util)+'">'+fmtEqUtil(cw.util)+'<div class="eq-plan">'+cw.label+'</div></td><td class="r '+eqUtilClass(pw.util)+'">'+fmtEqUtil(pw.util)+'<div class="eq-plan">'+pw.label+'</div></td><td>'+escH(e.planDate||'--')+'</td><td>'+st+'</td></tr>';});
+  el.innerHTML=html+'</tbody></table></div>';
+}
 function buildP5(){
   var html='<div id="res_output_p5"></div>';
   html+='<div id="p5_lt_banner"></div>';
@@ -2159,6 +2339,7 @@ function buildP5(){
   html+='<div class="card"><h2>Load Detail</h2><div class="fl-row" id="lc_selectors"></div><div class="tbl-wrap"><table><thead><tr><th>Department</th>';
   for(var j=0;j<STATE.mlis.length;j++)html+='<th class="r">'+escH(STATE.mlis[j].code)+'</th>';
   html+='<th class="r">Total Load</th><th class="r">Net Avail</th><th class="r">Source</th><th class="r">Util%</th><th class="r">Gap/Surplus</th></tr></thead><tbody id="load_tbody"></tbody></table></div></div>';
+  html+='<div class="card pur"><h2>Governing Labor / Equipment Constraints</h2><div class="sub">The highest routed resource utilization governs the department. Equipment is not converted into FTE.</div><div id="util_eq_gov_wrap"></div></div>';
   setHTML('p5_content',html);
 }
 function renderUtilTable(){
@@ -2368,6 +2549,7 @@ function buildP7(){
   html+='<div class="wf-view-toggle"><button class="wf-view-btn on" id="wf_btn_summary" onclick="setWfView(\'summary\')">Summary</button><button class="wf-view-btn" id="wf_btn_detail" onclick="setWfView(\'detail\')">Detail</button></div>';
   html+='<div id="wf_area"></div></div></div>';
   html+='<div class="card org"><h2>Recovery Plan &mdash; Per Department</h2><div class="sub">Each department: select a scenario, set trigger date, then add recovery milestones.</div><div id="ramp_dept_blocks"></div></div>';
+  html+='<div class="card pur"><h2>⚙ Equipment Recovery Plans</h2><div class="sub">Machine additions, shift-hour changes, OEE improvements, outsourced load relief, and in-service dates are modeled on the Equipment tab.</div><button class="btn btn-pu" onclick="guideGo(\'pEq\',\'nav_pEq\')">Open Machines &amp; Equipment</button></div>';
   html+='<div class="card dark"><h2>Recovery Plan Actions Summary</h2><div id="rpa_summary"></div></div>';
   setHTML('p7_content',html);buildRampDeptBlocks();updateRecoveryPlanSummary();
 }
@@ -2465,6 +2647,7 @@ function buildP8(){
   }
   html+='</tbody></table></div></div>';
   html+='<div class="card pnk"><h2>Footprint Summary</h2><div class="sub">Peaks use ship-date monthly demand and the simultaneous product mix. LT Adjust does not change footprint timing.</div><div id="fp_summary_bars"></div></div>';
+  html+='<div class="card pur"><h2>Installed Equipment Footprint</h2><div class="sub">Physical machine footprint is shown separately from WIP and storage. Do not add it again if your available-area figure is already net of installed equipment.</div><div id="eq_fp_wrap"></div></div>';
   var yrOpts='';for(var y=0;y<STATE.years.length;y++)yrOpts+='<option value="'+y+'">'+STATE.years[y]+'</option>';
   html+='<div class="card tel"><h2>Monthly WIP / Inventory</h2><div class="fl-row"><label style="font-size:12px;font-weight:600">Area:</label><select class="ni" style="width:auto" id="wip_area" onchange="renderWIPTable();autoSave()">'+areaOpts+'</select><label style="font-size:12px;font-weight:600;margin-left:8px">Year:</label><select class="ni" style="width:auto" id="wip_year" onchange="renderWIPTable();autoSave()">'+yrOpts+'</select></div><div id="wip_area_out"></div></div>';
   setHTML('p8_content',html);
@@ -2502,6 +2685,13 @@ function renderFpSummaryBars(){
     capMissing.slice(0,4).forEach(function(di){issues.push(escH(STATE.depts[di].name)+': Available capacity');});
     warn.innerHTML=!hasAnyDemand?'<div class="infobox ib-b"><b>Enter demand</b> to calculate monthly footprint and storage peaks.</div>':issues.length?'<div class="infobox ib-y"><b>⚠ Footprint incomplete:</b> '+(missing.length+capMissing.length)+' required input'+((missing.length+capMissing.length)===1?' is':'s are')+' missing.<br><span style="font-size:10px">'+issues.join(' · ')+(missing.length+capMissing.length>issues.length?' · …':'')+'</span></div>':'<div class="infobox ib-g"><b>✓ Footprint inputs complete</b> for all products with demand.</div>';
   }
+  renderEquipmentFootprint();
+}
+function renderEquipmentFootprint(){
+  var el=document.getElementById('eq_fp_wrap');if(!el)return;if(!equipmentConfig.length){el.innerHTML='<div class="eq-empty"><b>No equipment footprint configured.</b></div>';return;}syncEquipmentFromDOM();
+  var byDept={},current=0,planned=0;equipmentConfig.forEach(function(e){var cur=e.count*e.sqft,pl=(e.count+e.add)*e.sqft;current+=cur;planned+=pl;if(!byDept[e.dept])byDept[e.dept]={cur:0,plan:0};byDept[e.dept].cur+=cur;byDept[e.dept].plan+=pl;});
+  var html='<div class="eq-stat-grid"><div class="eq-stat"><div class="v">'+fmt(Math.round(current))+' sq ft</div><div class="l">Current Installed Footprint</div></div><div class="eq-stat"><div class="v">'+fmt(Math.round(planned))+' sq ft</div><div class="l">After Planned Additions</div></div><div class="eq-stat"><div class="v">'+fmt(Math.round(planned-current))+' sq ft</div><div class="l">Incremental Floor Space</div></div><div class="eq-stat"><div class="v">'+equipmentConfig.length+'</div><div class="l">Equipment Groups</div></div></div><div class="tbl-wrap"><table><thead><tr><th>Department</th><th class="r">Current Installed</th><th class="r">After Plan</th><th class="r">Incremental</th></tr></thead><tbody>';
+  Object.keys(byDept).forEach(function(k){var di=parseInt(k),v=byDept[k];html+='<tr'+deptRowClass(STATE.depts[di]?STATE.depts[di].type:'prod')+'><td><strong>'+escH(STATE.depts[di]?STATE.depts[di].name:'--')+'</strong></td><td class="r">'+fmt(Math.round(v.cur))+' sq ft</td><td class="r">'+fmt(Math.round(v.plan))+' sq ft</td><td class="r">'+fmt(Math.round(v.plan-v.cur))+' sq ft</td></tr>';});el.innerHTML=html+'</tbody></table></div>';
 }
 function renderFpDeptDetail(i){
   var el=document.getElementById('fp_dept_detail_'+i);if(!el||el.dataset.rendered==='1')return;
@@ -2676,17 +2866,19 @@ function recalc(){
   if(!STATE.generated)return;
   if(recalcTimer){clearTimeout(recalcTimer);recalcTimer=null;}
   invalidateLTSpreadCache();
+  EQ_SPREAD_CACHE=null;
   syncSubAnnualToAnnual();calcDemand();calcEff();
   updateScore();updateAL();updateNavDots();rebuildAllResBars();
   var active=document.querySelector('.pg.on'),activeId=active?active.id:'';
   if(activeId==='p1')renderP1LTBanner();
-  else if(activeId==='p5'){renderUtilTable();renderLoad();}
+  else if(activeId==='pEq'){renderEquipmentResults();renderEqGoverning();}
+  else if(activeId==='p5'){renderUtilTable();renderLoad();renderEqGoverning();}
   else if(activeId==='p6')renderGapChart();
   else if(activeId==='p7'){
     renderWaterfall();updateRecoveryPlanSummary();
     for(var i=0;i<STATE.depts.length;i++){if(STATE.depts[i].type==='wh')continue;var body=document.getElementById('ramp_dept_body_d'+i);if(body&&body.classList.contains('open'))renderRampChart(i);renderRampDeptBadge(i);}
   }
-  else if(activeId==='p8'){renderFpSummaryBars();renderWIPTable();}
+  else if(activeId==='p8'){renderFpSummaryBars();renderWIPTable();renderEquipmentFootprint();}
   else if(activeId==='p9')renderHC();
   else if(activeId==='p11')renderExecSummary();
 }
@@ -2706,7 +2898,7 @@ function renderExecSummary(){
   var exLtNote=document.getElementById('ex_lt_note');
   if(exLtNote){var errs=getLTErrCount();exLtNote.innerHTML=leadTimeAdjust?'<div class="infobox ib-lt"><b>&#9203; Phase LT Adjust ON.</b> Capacity demand shifted per dept phase assignments.'+(errs>0?' <span class="lt-err-badge">'+errs+' unassigned</span>':'')+'</div>':'';}
   var ltStatus=leadTimeAdjust?'ON \u2014 '+ltSummaryStr():'OFF';
-  var snapItems=[{l:'Supplier',v:STATE.supplier},{l:'Program',v:STATE.program},{l:'Audit Date',v:STATE.date},{l:'Auditor',v:STATE.auditor},{l:'Forecast Period',v:Y[0]+' to '+Y[Y.length-1]},{l:'Product Lines',v:M.length+' MLIs'},{l:'Departments',v:D.length},{l:'Forecast Years',v:Y.length},{l:'LT Phase Adjust',v:ltStatus}];
+  var snapItems=[{l:'Supplier',v:STATE.supplier},{l:'Program',v:STATE.program},{l:'Audit Date',v:STATE.date},{l:'Auditor',v:STATE.auditor},{l:'Forecast Period',v:Y[0]+' to '+Y[Y.length-1]},{l:'Product Lines',v:M.length+' MLIs'},{l:'Departments',v:D.length},{l:'Equipment Groups',v:equipmentConfig.length+' modeled'},{l:'Forecast Years',v:Y.length},{l:'LT Phase Adjust',v:ltStatus}];
   var sg='<div class="snap-grid">';snapItems.forEach(function(s){sg+='<div class="snap-item"><div class="sl">'+escH(s.l)+'</div><div class="sv'+(s.v?'':' empty')+'">'+escH(s.v||'Not entered')+'</div></div>';});setHTML('ex_snap_grid',sg+'</div>');
   var demTots=[];for(var y=0;y<Y.length;y++){var t=0;for(var j=0;j<M.length;j++)t+=getDemAnnual(j,y);demTots.push(t);}
   var maxDem=Math.max.apply(null,demTots)||1,peakYrIdx=demTots.indexOf(Math.max.apply(null,demTots));
@@ -2724,6 +2916,7 @@ function renderExecSummary(){
     dh+='<tr class="'+(D[i].type==='off'?'row-off':'row-prod')+'"><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td><td>'+typeLabel(D[i].type)+'</td><td class="r">'+fmt(Math.round(avail))+' hrs</td><td><span class="src-badge '+(src==='[D]'?'src-d':'src-t')+'">'+src+'</span></td><td class="r '+rag(wu)+'">'+fmtP(wu)+'</td><td>'+(fy!=='--'?fy:'No risk')+'</td><td>'+rt2+'</td></tr>';
   }
   setHTML('ex_dept_tbody',dh||'<tr><td colspan="7" style="color:#a0aec0;text-align:center">No data.</td></tr>');
+  renderExecEquipmentSummary();
   var th='<tr><th>Department</th>';for(var y=0;y<Y.length;y++)th+='<th class="r">'+Y[y]+'</th>';th+='</tr>';setHTML('ex_util_thead',th);
   var uh='';for(var i=0;i<D.length;i++){if(D[i].type==='wh')continue;var avail=getNetAvail(i);uh+='<tr class="'+(D[i].type==='off'?'row-off':'row-prod')+'"><td><strong>'+deptIcon(D[i].type)+escH(D[i].name)+'</strong></td>';for(var y=0;y<Y.length;y++){var u=avail>0?getDeptLoadAnnual(i,y)/avail*100:NaN;uh+='<td class="r '+rag(u)+'">'+fmtP(u)+'</td>';}uh+='</tr>';}
   setHTML('ex_util_tbody',uh||'<tr><td colspan="20" style="color:#a0aec0;text-align:center">No data.</td></tr>');
@@ -2782,12 +2975,14 @@ function renderExecSummary(){
   setHTML('ex_al_summary',alH);
   var rPct=clItems.length>0?Math.round(safeDiv(cf,clItems.length)*100):0;
   setText('ex_kpi_r',cf+'/'+tot);setText('ex_kpi_r_sub',rPct+'% confirmed');document.getElementById('ex_kpi_tile_r').className='kpi-tile '+(rPct===100?'green':rPct>=60?'yellow':'red');
-  setText('ex_kpi_risk',atRisk);setText('ex_kpi_risk_sub','of '+(D.filter(function(d){return d.type!=='wh';}).length)+' depts');
+  var eqAtRisk=0;equipmentConfig.forEach(function(e,ei){if(getEqWorst(ei,false).util>=85)eqAtRisk++;});
+  setText('ex_kpi_risk',atRisk+eqAtRisk);setText('ex_kpi_risk_sub',atRisk+' labor / '+eqAtRisk+' equipment');
   setText('ex_kpi_peak',Y[peakYrIdx]);setText('ex_kpi_peak_sub',fmt(demTots[peakYrIdx])+' total units');
   setText('ex_kpi_actions',ao);setText('ex_kpi_actions_sub','of '+(ao+aip+ac)+' total');
   var risks=[];
   for(var i=0;i<D.length;i++){if(D[i].type==='wh')continue;var avail=getNetAvail(i);for(var y=0;y<Y.length;y++){var u=avail>0?getDeptLoadAnnual(i,y)/avail*100:0;if(u>100){risks.push({level:'red',title:escH(D[i].name)+' overloaded in '+Y[y]+(leadTimeAdjust?' (LT-adj)':''),desc:fmtP(u)+' utilisation \u2014 '+fmt(Math.round(getDeptLoadAnnual(i,y)-avail))+' hrs shortfall.'});break;}}}
   for(var i=0;i<D.length;i++){if(D[i].type==='wh')continue;var avail=getNetAvail(i);for(var y=0;y<Y.length;y++){var u=avail>0?getDeptLoadAnnual(i,y)/avail*100:0;if(u>=85&&u<=100){risks.push({level:'yellow',title:escH(D[i].name)+' at risk in '+Y[y]+(leadTimeAdjust?' (LT-adj)':''),desc:fmtP(u)+' \u2014 approaching limit.'});break;}}}
+  equipmentConfig.forEach(function(e,ei){var w=getEqWorst(ei,false);if(w.util>100||w.util===Infinity)risks.push({level:'red',title:'Equipment constrained: '+escH(e.name),desc:fmtEqUtil(w.util)+' in '+escH(w.label)+'; '+fmt(Math.round(w.load))+' required machine hrs vs '+fmt(Math.round(w.cap))+' available.'});else if(w.util>=85)risks.push({level:'yellow',title:'Equipment at risk: '+escH(e.name),desc:fmtEqUtil(w.util)+' in '+escH(w.label)+'.'});});
   var ltErrCount=getLTErrCount();
   if(ltErrCount>0)risks.push({level:'yellow',title:'Lead Time Config: '+ltErrCount+' unassigned dept/MLI combos',desc:'Demand placed at delivery date. Go to Lead Times tab to resolve.'});
   for(var k=0;k<STATE.clItems.length;k++){var info2=clStatusFromDOM(k);if(!info2.confirmed)risks.push({level:'yellow',title:'Readiness item unconfirmed',desc:escH(STATE.clItems[k])});}
@@ -2825,8 +3020,9 @@ function doSave(){
   catch(e){setText('hdr_save_ts','Auto-save failed \u2014 data too large');console.warn('localStorage quota:',e);}
 }
 function collectAllData(){
+  syncEquipmentFromDOM();
   var data={
-    version:'6.77',ts:Date.now(),resolution:RESOLUTION,wfView:wfView,gcMode:gcMode,sfVisible:sfVisible,dwVisible:dwVisible,
+    version:'6.78',ts:Date.now(),resolution:RESOLUTION,wfView:wfView,gcMode:gcMode,sfVisible:sfVisible,dwVisible:dwVisible,
     leadTimeAdjust:leadTimeAdjust,ltSpreadMode:ltSpreadMode,rampMetric:rampMetric,
     ltConfig:{phases:{},deptMap:{}},
     state:{supplier:STATE.supplier,program:STATE.program,date:STATE.date,auditor:STATE.auditor,startYr:STATE.startYr,numYrs:STATE.numYrs,mlis:STATE.mlis,depts:STATE.depts,clItems:STATE.clItems,years:STATE.years},
@@ -2837,7 +3033,7 @@ function collectAllData(){
     headcount:{ops:sv('hc_ops'),off:sv('hc_off'),tgt:sv('hc_tgt'),lead:sv('hc_lead')},
     checklist:{},scenarios:{wf_dept:sv('wf_dept'),wf_view:wfView},
     rampUp:{},util:{lc_yr:sv('lc_yr')||loadYearSel,lc_period:sv('lc_period')||loadPeriodSel},gap:{gc_dept:sv('gc_dept'),gc_mode:gcMode},
-    wip:{area:sv('wip_area'),year:sv('wip_year')},actionLog:[]
+    wip:{area:sv('wip_area'),year:sv('wip_year')},equipment:deepCopy(equipmentConfig),actionLog:[]
   };
   for(var mi=0;mi<STATE.mlis.length;mi++){
     data.ltConfig.phases[mi]=deepCopy(getPhases(mi));
@@ -2888,6 +3084,7 @@ function validateImportData(data){
   for(var di=0;di<data.state.depts.length;di++)if(!data.state.depts[di]||typeof data.state.depts[di].name!=='string'||!data.state.depts[di].name.trim())return'Every department needs a name.';
   if(data.state.clItems!==undefined&&(!Array.isArray(data.state.clItems)||data.state.clItems.length>200))return'Checklist is invalid or too large.';
   if(data.actionLog!==undefined&&(!Array.isArray(data.actionLog)||data.actionLog.length>500))return'Action log is invalid or too large.';
+  if(data.equipment!==undefined&&(!Array.isArray(data.equipment)||data.equipment.length>200))return'Equipment configuration is invalid or too large.';
   return'';
 }
 function normalizeLTConfig(raw,mliCount,deptCount){
@@ -2924,7 +3121,9 @@ function restoreAllData(data){
   leadTimeAdjust=data.leadTimeAdjust===true;ltSpreadMode=leadTimeAdjust&&data.ltSpreadMode===true;
   invalidateLTSpreadCache();
   ltConfig=normalizeLTConfig(data.ltConfig,st.mlis.length,st.depts.length);
+  equipmentConfig=[];equipmentC=0;
   updateHeader();generateWorkbook(true);
+  equipmentConfig=normalizeEquipmentConfig(data.equipment);buildPEq();
   setTimeout(function(){restoreValues(data);},400);
 }
 function restoreValues(data){
@@ -2994,7 +3193,7 @@ function exportData(){
   var safeSupplier=STATE.supplier.replace(/[^a-zA-Z0-9_\-]/g,'_');
   var json=JSON.stringify(collectAllData(),null,2),blob=new Blob([json],{type:'application/json'});
   var url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='Capacity_Workbook_v677_'+safeSupplier+'_'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='Capacity_Workbook_v678_'+safeSupplier+'_'+new Date().toISOString().slice(0,10)+'.json';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 function importData(event){
