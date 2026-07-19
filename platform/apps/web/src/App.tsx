@@ -11,6 +11,7 @@ import {
   type ModelValidationResult,
 } from "./api.js";
 import { formatPercent, rankConstraintPeriods, summarizeDecision } from "./analysis.js";
+import DecisionExports from "./DecisionExports.js";
 import RecoveryPanel from "./RecoveryPanel.js";
 import { findBaselineScenarioId } from "./recovery.js";
 
@@ -291,7 +292,10 @@ export default function App() {
                 <div className="two-column decision-columns"><article className="card"><h3>Recommendation</h3><p>{decision.state === "gap" ? "Do not publish the commitment yet. The modeled recovery still leaves capacity gaps; revise the action timing, magnitude, or demand assumption and compare again." : decision.state === "watch" ? "Treat the commitment as conditional. The recovery improves the plan, but the governing margin remains narrow and requires explicit operating controls." : decision.state === "ready" ? "The modeled recovery supports the plan. Preserve the action register, source data, assumptions, and calculation lineage before publishing the commitment." : "Resolve blocking data issues before making a capacity decision."}</p></article><article className="card"><h3>Decision evidence</h3><ul><li>Protected baseline calculation</li><li>Named recovery actions and owners</li><li>Effective dates and approval states</li><li>Remaining constraint periods</li><li>Model warnings: {warningCount}</li></ul></article></div>
                 <div className="table-card"><div className="card-title-row"><div><h3>Highest-risk periods after recovery</h3><small>Ranked across all modeled resource classes</small></div><button className="secondary" type="button" onClick={() => setActiveStep("recovery")}>Revise recovery</button></div><div className="table-wrap"><table><thead><tr><th>Resource</th><th>Period</th><th className="number">Load</th><th className="number">Capacity</th><th className="number">Gap</th><th className="number">Utilization</th></tr></thead><tbody>{constraints.map(row => <tr key={`${row.resourceGroupId}-${row.periodStart}`}><td>{names[row.resourceGroupId] ?? row.resourceGroupId}</td><td>{row.periodStart}</td><td className="number">{row.load.toFixed(1)}</td><td className="number">{row.capacity.toFixed(1)}</td><td className={`number ${row.gap < 0 ? "negative" : ""}`}>{row.gap.toFixed(1)}</td><td className="number"><span className={`utilization ${row.utilization !== null && row.utilization > 1 ? "over" : ""}`}>{formatPercent(row.utilization)}</span></td></tr>)}</tbody></table></div></div>
               </>}
-              <div className="panel-actions split"><button className="secondary" type="button" onClick={() => setActiveStep("recovery")}>Back</button><button className="primary" type="button" disabled={!comparison}>Publish decision package <span className="coming">Next slice</span></button></div>
+              <div className="panel-actions split">
+                <button className="secondary" type="button" onClick={() => setActiveStep("recovery")}>Back</button>
+                {model && comparison ? <DecisionExports model={model} comparison={comparison} /> : <button className="primary" type="button" disabled>Decision package unavailable</button>}
+              </div>
             </section>
           )}
         </main>
