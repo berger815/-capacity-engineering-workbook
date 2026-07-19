@@ -1,4 +1,4 @@
-import type { CalculationResult, CapacityModel } from "@capacity/domain";
+import type { CalculationResult, CapacityModel, ScenarioComparisonResult } from "@capacity/domain";
 
 export interface ModelValidationResult {
   valid: boolean;
@@ -8,6 +8,8 @@ export interface ModelValidationResult {
     resourceGroups: number;
     routingRevisions: number;
     demandRecords: number;
+    scenarios?: number;
+    scenarioActions?: number;
   };
   issues?: Array<{ path: string; message: string; code: string }>;
 }
@@ -81,6 +83,17 @@ export function calculateModel(model: CapacityModel, scenarioId: string): Promis
   return request<CalculationResult>("/v1/calculate", {
     method: "POST",
     body: JSON.stringify({ model, scenarioId }),
+  });
+}
+
+export function compareModels(
+  model: CapacityModel,
+  baselineScenarioId: string,
+  comparisonScenarioId: string,
+): Promise<ScenarioComparisonResult> {
+  return request<ScenarioComparisonResult>("/v1/compare", {
+    method: "POST",
+    body: JSON.stringify({ model, baselineScenarioId, comparisonScenarioId }),
   });
 }
 
