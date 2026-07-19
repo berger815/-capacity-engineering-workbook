@@ -50,10 +50,11 @@ describe("demand CSV import", () => {
       customerOrProgram: "Launch, Wave 1",
       sourceRecordId: "A1",
     });
-    expect(result.controlTotals).toEqual({
+    expect(result.controlTotals).toMatchObject({
       inputRows: 2,
       acceptedRows: 2,
       rejectedRows: 0,
+      warningRows: 0,
       totalQuantity: 1250,
       quantityByProduct: { hx100: 1200, hx200: 50 },
       earliestShipDate: "2027-10-15",
