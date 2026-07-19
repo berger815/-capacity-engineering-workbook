@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./explain": {
+      "types": "./dist/explain.d.ts",
+      "import": "./dist/explain.js"
     }
   },
   "scripts": {
