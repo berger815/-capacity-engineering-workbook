@@ -42,9 +42,27 @@ function validEntity(entity: WorkbenchEntity, scope: WorkbenchScope): boolean {
   return entitiesForScope(scope).some(item => item.id === entity);
 }
 
+function storedTarget(scope: WorkbenchScope): WorkbenchTarget | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem("capacity-workbench-target");
+    if (raw) {
+      const parsed = JSON.parse(raw) as WorkbenchTarget;
+      if (parsed.entity && validEntity(parsed.entity, scope)) return parsed;
+    }
+    const entity = new URL(window.location.href).searchParams.get("entity") as WorkbenchEntity | null;
+    const recordId = new URL(window.location.href).searchParams.get("record") ?? undefined;
+    return entity && validEntity(entity, scope) ? { entity, ...(recordId ? { recordId } : {}) } : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function ModelWorkbench({ model, baselineScenarioId, scope, target, onModelChange, onBack, onContinue, onReturn }: ModelWorkbenchProps) {
   const definitions = useMemo(() => entitiesForScope(scope), [scope]);
-  const initialEntity = target && validEntity(target.entity, scope) ? target.entity : definitions[0]?.id ?? "products";
+  const [localTarget, setLocalTarget] = useState<WorkbenchTarget | null>(() => target ?? storedTarget(scope));
+  const effectiveTarget = target ?? localTarget;
+  const initialEntity = effectiveTarget && validEntity(effectiveTarget.entity, scope) ? effectiveTarget.entity : definitions[0]?.id ?? "products";
   const [entity, setEntity] = useState<WorkbenchEntity>(initialEntity);
   const [draft, setDraft] = useState<CapacityModel>(() => copyModel(model));
   const [dirtySections, setDirtySections] = useState<Set<string>>(new Set());
@@ -59,9 +77,14 @@ export default function ModelWorkbench({ model, baselineScenarioId, scope, targe
   }, [model]);
 
   useEffect(() => {
-    if (target && validEntity(target.entity, scope)) setEntity(target.entity);
+    const nextTarget = target ?? storedTarget(scope);
+    if (nextTarget) setLocalTarget(nextTarget);
+  }, [target, scope]);
+
+  useEffect(() => {
+    if (effectiveTarget && validEntity(effectiveTarget.entity, scope)) setEntity(effectiveTarget.entity);
     else if (!validEntity(entity, scope)) setEntity(definitions[0]?.id ?? "products");
-  }, [target, scope, entity, definitions]);
+  }, [effectiveTarget, scope, entity, definitions]);
 
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => {
@@ -98,9 +121,15 @@ export default function ModelWorkbench({ model, baselineScenarioId, scope, targe
     setDirtySections(new Set());
   }
 
+  function clearTarget(): void {
+    setLocalTarget(null);
+    window.sessionStorage.removeItem("capacity-workbench-target");
+  }
+
   function confirmLeave(action: () => void): void {
     if (!dirty || window.confirm("Discard unsaved Workbench changes?")) {
       if (dirty) discard();
+      clearTarget();
       action();
     }
   }
@@ -112,37 +141,26 @@ export default function ModelWorkbench({ model, baselineScenarioId, scope, targe
     setImportOpen(false);
   }
 
-  const editor = entity === "products" ? <ProductsEditor model={draft} mutate={mutate} targetId={target?.recordId} />
-    : entity === "calendars" ? <CalendarsEditor model={draft} mutate={mutate} targetId={target?.recordId} />
-      : entity === "resource-groups" ? <ResourceGroupsEditor model={draft} mutate={mutate} targetId={target?.recordId} />
-        : entity === "resources" ? <ResourcesEditor model={draft} mutate={mutate} targetId={target?.recordId} />
-          : entity === "routing" ? <RoutingEditor model={draft} mutate={mutate} targetId={target?.recordId} parentTargetId={target?.parentRecordId} />
-            : entity === "demand" ? <DemandEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={target?.recordId} />
-              : entity === "footprint" ? <FootprintWipEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={target?.recordId} />
-                : <ActionLogEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={target?.recordId} />;
+  const editor = entity === "products" ? <ProductsEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
+    : entity === "calendars" ? <CalendarsEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
+      : entity === "resource-groups" ? <ResourceGroupsEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
+        : entity === "resources" ? <ResourcesEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
+          : entity === "routing" ? <RoutingEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} parentTargetId={effectiveTarget?.parentRecordId} />
+            : entity === "demand" ? <DemandEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={effectiveTarget?.recordId} />
+              : entity === "footprint" ? <FootprintWipEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={effectiveTarget?.recordId} />
+                : <ActionLogEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={effectiveTarget?.recordId} />;
 
   return <section className="panel model-workbench">
     <div className="panel-heading workbench-heading"><div><span className="eyebrow blue">Model Workbench</span><h2>{scope === "footprint" ? "Footprint and WIP" : scope === "actions" ? "Assessment Action Log" : scope === "all" ? "Inspect and maintain the complete model" : "Build and reconcile the assessment model"}</h2></div><p>One validated editing surface for master data, demand, footprint context, and assessment governance.</p></div>
 
-    {target?.returnTo ? <div className="workbench-breadcrumb"><span>{target.returnTo.label}</span><b>›</b><strong>{definition.label}</strong><button className="secondary" type="button" onClick={() => confirmLeave(() => onReturn?.(target.returnTo!))}>Return to {target.returnTo.label}</button></div> : null}
+    {effectiveTarget?.returnTo ? <div className="workbench-breadcrumb"><span>{effectiveTarget.returnTo.label}</span><b>›</b><strong>{definition.label}</strong><button className="secondary" type="button" onClick={() => confirmLeave(() => onReturn?.(effectiveTarget.returnTo!))}>Return to {effectiveTarget.returnTo.label}</button></div> : null}
 
-    <div className="workbench-commandbar">
-      <div><strong>{definition.label}</strong><span>{definition.note}</span></div>
-      <div className="workbench-command-actions">
-        {definition.inputEntity ? <button className="secondary" type="button" onClick={() => setImportOpen(true)} disabled={dirty}>Import from file</button> : <span className="planning-only">Direct planning record</span>}
-        <button className="secondary" type="button" onClick={discard} disabled={!dirty || saving}>Discard</button>
-        <button className="primary" type="button" onClick={() => void save()} disabled={!dirty || saving}>{saving ? "Validating…" : `Save ${dirtySections.size > 1 ? "model changes" : "changes"}`}</button>
-      </div>
-    </div>
+    <div className="workbench-commandbar"><div><strong>{definition.label}</strong><span>{definition.note}</span></div><div className="workbench-command-actions">{definition.inputEntity ? <button className="secondary" type="button" onClick={() => setImportOpen(true)} disabled={dirty}>Import from file</button> : <span className="planning-only">Direct planning record</span>}<button className="secondary" type="button" onClick={discard} disabled={!dirty || saving}>Discard</button><button className="primary" type="button" onClick={() => void save()} disabled={!dirty || saving}>{saving ? "Validating…" : `Save ${dirtySections.size > 1 ? "model changes" : "changes"}`}</button></div></div>
 
     {dirty ? <div className="unsaved-banner"><strong>Unsaved model changes</strong><span>{[...dirtySections].map(item => entityDefinition(item as WorkbenchEntity).label).join(", ")}</span></div> : null}
 
     <div className={`workbench-layout ${importOpen ? "drawer-open" : ""}`}>
-      <nav className="entity-rail" aria-label="Model entities">{definitions.map(item => {
-        const count = item.count(draft);
-        const sectionDirty = dirtySections.has(item.id) || (item.id === "footprint" && dirtySections.has("footprint")) || (item.id === "actions" && dirtySections.has("actions"));
-        return <button key={item.id} type="button" className={entity === item.id ? "active" : ""} onClick={() => { setEntity(item.id); setImportOpen(false); }}><span><strong>{item.label}</strong><small>{item.note}</small></span><b>{count.toLocaleString()}</b>{sectionDirty ? <i title="Unsaved changes">•</i> : null}</button>;
-      })}</nav>
+      <nav className="entity-rail" aria-label="Model entities">{definitions.map(item => { const count = item.count(draft); const sectionDirty = dirtySections.has(item.id); return <button key={item.id} type="button" className={entity === item.id ? "active" : ""} onClick={() => { setEntity(item.id); setImportOpen(false); setLocalTarget(null); window.sessionStorage.removeItem("capacity-workbench-target"); }}><span><strong>{item.label}</strong><small>{item.note}</small></span><b>{count.toLocaleString()}</b>{sectionDirty ? <i title="Unsaved changes">•</i> : null}</button>; })}</nav>
       <div className="workbench-editor" data-entity={entity}>{editor}</div>
       {importOpen ? <EntityImportPanel entity={entity} model={model} baselineScenarioId={baselineScenarioId} blocked={dirty} onApplied={applyImport} onClose={() => setImportOpen(false)} /> : null}
     </div>
