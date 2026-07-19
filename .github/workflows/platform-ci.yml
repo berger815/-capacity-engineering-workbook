@@ -12,9 +12,6 @@ on:
       - "platform/**"
       - ".github/workflows/platform-ci.yml"
 
-permissions:
-  contents: write
-
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -38,32 +35,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-      - name: Apply final lead-time type correction
-        working-directory: .
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('platform/apps/web/src/AnalysisExplorer.tsx')
-          text = path.read_text()
-          text = text.replace(
-              '  if (!product || !revision) return <div className="chart-empty">No effective routing revision is available.</div>;\n  const phases = [...revision.phases]',
-              '  if (!product || !revision) return <div className="chart-empty">No effective routing revision is available.</div>;\n  const activeRevision = revision;\n  const phases = [...activeRevision.phases]'
-          )
-          text = text.replace('const operations = revision.operations.filter', 'const operations = activeRevision.operations.filter')
-          text = text.replace('const phase = revision.phases.find', 'const phase = activeRevision.phases.find')
-          text = text.replace('revision.operations].sort', 'activeRevision.operations].sort')
-          text = text.replace('revision.phases.find', 'activeRevision.phases.find')
-          path.write_text(text)
-          PY
-          if ! git diff --quiet -- platform/apps/web/src/AnalysisExplorer.tsx; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add platform/apps/web/src/AnalysisExplorer.tsx
-            git commit -m "fix(web): retain active routing revision in lead-time editor"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
       - name: Enable pnpm
         run: corepack enable
       - name: Set up Node
