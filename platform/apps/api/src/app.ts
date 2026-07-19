@@ -3,6 +3,8 @@ import type { CapacityModel } from "@capacity/domain";
 import { capacityModelSchema } from "@capacity/domain";
 import { calculateCapacity } from "@capacity/engine";
 import { northstarV2Model } from "@capacity/fixtures";
+import type { DemandCsvMapping } from "@capacity/importer";
+import { importDemandCsv, mergeDemandImport } from "@capacity/importer";
 
 const MAX_BODY_BYTES = 10 * 1024 * 1024;
 
@@ -13,6 +15,53 @@ export interface ApiResult {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validationFailure(issues: Array<{ path: PropertyKey[]; message: string; code: string }>): ApiResult {
+  return {
+    statusCode: 422,
+    body: {
+      code: "MODEL_VALIDATION_FAILED",
+      issues: issues.map(issue => ({
+        path: issue.path.map(String).join("."),
+        message: issue.message,
+        code: issue.code,
+      })),
+    },
+  };
+}
+
+function validateImportRequest(body: unknown):
+  | { ok: true; model: CapacityModel; scenarioId: string; csv: string; mapping: DemandCsvMapping; acceptPartial: boolean }
+  | { ok: false; result: ApiResult } {
+  if (!isRecord(body)) {
+    return { ok: false, result: { statusCode: 400, body: { code: "INVALID_REQUEST", message: "JSON object required" } } };
+  }
+
+  const scenarioId = body.scenarioId;
+  const csv = body.csv;
+  const mapping = body.mapping;
+  if (typeof scenarioId !== "string" || scenarioId.length === 0) {
+    return { ok: false, result: { statusCode: 400, body: { code: "SCENARIO_REQUIRED", message: "scenarioId is required" } } };
+  }
+  if (typeof csv !== "string") {
+    return { ok: false, result: { statusCode: 400, body: { code: "CSV_REQUIRED", message: "csv must be a string" } } };
+  }
+  if (!isRecord(mapping)) {
+    return { ok: false, result: { statusCode: 400, body: { code: "MAPPING_REQUIRED", message: "mapping must be an object" } } };
+  }
+
+  const validation = capacityModelSchema.safeParse(body.model);
+  if (!validation.success) return { ok: false, result: validationFailure(validation.error.issues) };
+
+  return {
+    ok: true,
+    model: validation.data as CapacityModel,
+    scenarioId,
+    csv,
+    mapping: mapping as unknown as DemandCsvMapping,
+    acceptPartial: body.acceptPartial === true,
+  };
 }
 
 export function routeApiRequest(method: string, path: string, body?: unknown): ApiResult {
@@ -49,17 +98,52 @@ export function routeApiRequest(method: string, path: string, body?: unknown): A
           },
         }
       : {
-          statusCode: 422,
+          ...validationFailure(validation.error.issues),
           body: {
             valid: false,
-            code: "MODEL_VALIDATION_FAILED",
-            issues: validation.error.issues.map(issue => ({
-              path: issue.path.join("."),
-              message: issue.message,
-              code: issue.code,
-            })),
+            ...(validationFailure(validation.error.issues).body as Record<string, unknown>),
           },
         };
+  }
+
+  if (method === "POST" && path === "/v1/import/demand/preview") {
+    const request = validateImportRequest(body);
+    if (!request.ok) return request.result;
+    try {
+      const result = importDemandCsv(request.csv, request.model.products, request.scenarioId, request.mapping);
+      return { statusCode: 200, body: result };
+    } catch (error) {
+      return {
+        statusCode: 400,
+        body: { code: "IMPORT_REJECTED", message: error instanceof Error ? error.message : "Import rejected" },
+      };
+    }
+  }
+
+  if (method === "POST" && path === "/v1/import/demand/apply") {
+    const request = validateImportRequest(body);
+    if (!request.ok) return request.result;
+    try {
+      const imported = importDemandCsv(request.csv, request.model.products, request.scenarioId, request.mapping);
+      const hasErrors = imported.issues.some(issue => issue.severity === "error");
+      if (hasErrors && !request.acceptPartial) {
+        return {
+          statusCode: 422,
+          body: {
+            code: "IMPORT_HAS_REJECTED_ROWS",
+            message: "Import contains rejected rows; set acceptPartial=true to apply accepted rows",
+            import: imported,
+          },
+        };
+      }
+      const model = mergeDemandImport(request.model, request.scenarioId, imported.records);
+      return { statusCode: 200, body: { model, import: imported } };
+    } catch (error) {
+      return {
+        statusCode: 400,
+        body: { code: "IMPORT_REJECTED", message: error instanceof Error ? error.message : "Import rejected" },
+      };
+    }
   }
 
   if (method === "POST" && path === "/v1/calculate") {
@@ -73,19 +157,7 @@ export function routeApiRequest(method: string, path: string, body?: unknown): A
     }
 
     const validation = capacityModelSchema.safeParse(body.model);
-    if (!validation.success) {
-      return {
-        statusCode: 422,
-        body: {
-          code: "MODEL_VALIDATION_FAILED",
-          issues: validation.error.issues.map(issue => ({
-            path: issue.path.join("."),
-            message: issue.message,
-            code: issue.code,
-          })),
-        },
-      };
-    }
+    if (!validation.success) return validationFailure(validation.error.issues);
 
     try {
       const result = calculateCapacity(validation.data as CapacityModel, scenarioId);
