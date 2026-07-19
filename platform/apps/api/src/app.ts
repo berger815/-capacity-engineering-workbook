@@ -5,6 +5,7 @@ import { calculateCapacity, compareCapacityScenarios } from "@capacity/engine";
 import { northstarRecoveryModel } from "@capacity/fixtures";
 import type { DemandCsvMapping } from "@capacity/importer";
 import { importDemandCsv, mergeDemandImport } from "@capacity/importer";
+import { buildDecisionPackage, renderDecisionPackageHtml, serializeDecisionPackage } from "@capacity/reporting";
 
 const MAX_BODY_BYTES = 10 * 1024 * 1024;
 
@@ -69,6 +70,20 @@ function validatedModel(body: Record<string, unknown>): { model: CapacityModel }
   return validation.success
     ? { model: validation.data as CapacityModel }
     : { result: validationFailure(validation.error.issues) };
+}
+
+function comparisonIds(body: Record<string, unknown>):
+  | { baselineScenarioId: string; comparisonScenarioId: string }
+  | { result: ApiResult } {
+  const baselineScenarioId = body.baselineScenarioId;
+  const comparisonScenarioId = body.comparisonScenarioId;
+  if (typeof baselineScenarioId !== "string" || baselineScenarioId.length === 0) {
+    return { result: { statusCode: 400, body: { code: "BASELINE_SCENARIO_REQUIRED", message: "baselineScenarioId is required" } } };
+  }
+  if (typeof comparisonScenarioId !== "string" || comparisonScenarioId.length === 0) {
+    return { result: { statusCode: 400, body: { code: "COMPARISON_SCENARIO_REQUIRED", message: "comparisonScenarioId is required" } } };
+  }
+  return { baselineScenarioId, comparisonScenarioId };
 }
 
 export function routeApiRequest(method: string, path: string, body?: unknown): ApiResult {
@@ -156,15 +171,11 @@ export function routeApiRequest(method: string, path: string, body?: unknown): A
   }
 
   if (method === "POST" && path === "/v1/calculate") {
-    if (!isRecord(body)) {
-      return { statusCode: 400, body: { code: "INVALID_REQUEST", message: "JSON object required" } };
-    }
-
+    if (!isRecord(body)) return { statusCode: 400, body: { code: "INVALID_REQUEST", message: "JSON object required" } };
     const scenarioId = body.scenarioId;
     if (typeof scenarioId !== "string" || scenarioId.length === 0) {
       return { statusCode: 400, body: { code: "SCENARIO_REQUIRED", message: "scenarioId is required" } };
     }
-
     const validation = validatedModel(body);
     if ("result" in validation) return validation.result;
 
@@ -173,42 +184,69 @@ export function routeApiRequest(method: string, path: string, body?: unknown): A
     } catch (error) {
       return {
         statusCode: 400,
-        body: {
-          code: "CALCULATION_REJECTED",
-          message: error instanceof Error ? error.message : "Calculation rejected",
-        },
+        body: { code: "CALCULATION_REJECTED", message: error instanceof Error ? error.message : "Calculation rejected" },
       };
     }
   }
 
   if (method === "POST" && path === "/v1/compare") {
-    if (!isRecord(body)) {
-      return { statusCode: 400, body: { code: "INVALID_REQUEST", message: "JSON object required" } };
-    }
-    const baselineScenarioId = body.baselineScenarioId;
-    const comparisonScenarioId = body.comparisonScenarioId;
-    if (typeof baselineScenarioId !== "string" || baselineScenarioId.length === 0) {
-      return { statusCode: 400, body: { code: "BASELINE_SCENARIO_REQUIRED", message: "baselineScenarioId is required" } };
-    }
-    if (typeof comparisonScenarioId !== "string" || comparisonScenarioId.length === 0) {
-      return { statusCode: 400, body: { code: "COMPARISON_SCENARIO_REQUIRED", message: "comparisonScenarioId is required" } };
-    }
-
+    if (!isRecord(body)) return { statusCode: 400, body: { code: "INVALID_REQUEST", message: "JSON object required" } };
+    const ids = comparisonIds(body);
+    if ("result" in ids) return ids.result;
     const validation = validatedModel(body);
     if ("result" in validation) return validation.result;
 
     try {
       return {
         statusCode: 200,
-        body: compareCapacityScenarios(validation.model, baselineScenarioId, comparisonScenarioId),
+        body: compareCapacityScenarios(validation.model, ids.baselineScenarioId, ids.comparisonScenarioId),
       };
     } catch (error) {
       return {
         statusCode: 400,
-        body: {
-          code: "COMPARISON_REJECTED",
-          message: error instanceof Error ? error.message : "Comparison rejected",
-        },
+        body: { code: "COMPARISON_REJECTED", message: error instanceof Error ? error.message : "Comparison rejected" },
+      };
+    }
+  }
+
+  if (method === "POST" && path === "/v1/report/decision") {
+    if (!isRecord(body)) return { statusCode: 400, body: { code: "INVALID_REQUEST", message: "JSON object required" } };
+    const ids = comparisonIds(body);
+    if ("result" in ids) return ids.result;
+    const validation = validatedModel(body);
+    if ("result" in validation) return validation.result;
+    const format = body.format ?? "html";
+    if (format !== "html" && format !== "json") {
+      return { statusCode: 400, body: { code: "REPORT_FORMAT_INVALID", message: "format must be html or json" } };
+    }
+
+    try {
+      const comparison = compareCapacityScenarios(validation.model, ids.baselineScenarioId, ids.comparisonScenarioId);
+      const decisionPackage = buildDecisionPackage(validation.model, comparison);
+      const safeName = validation.model.name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-|-$/g, "");
+      return format === "html"
+        ? {
+            statusCode: 200,
+            body: {
+              filename: `${safeName || "capacity-assurance"}-decision.html`,
+              mimeType: "text/html;charset=utf-8",
+              content: renderDecisionPackageHtml(decisionPackage),
+              decision: decisionPackage.decision,
+            },
+          }
+        : {
+            statusCode: 200,
+            body: {
+              filename: `${safeName || "capacity-assurance"}-portable-assessment.json`,
+              mimeType: "application/json;charset=utf-8",
+              content: serializeDecisionPackage(decisionPackage),
+              decision: decisionPackage.decision,
+            },
+          };
+    } catch (error) {
+      return {
+        statusCode: 400,
+        body: { code: "REPORT_REJECTED", message: error instanceof Error ? error.message : "Decision report rejected" },
       };
     }
   }
@@ -228,8 +266,7 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   }
 
   if (chunks.length === 0) return undefined;
-  const text = Buffer.concat(chunks).toString("utf8");
-  return JSON.parse(text) as unknown;
+  return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
 }
 
 function writeJson(response: ServerResponse, result: ApiResult): void {
@@ -246,9 +283,7 @@ export function createCapacityApiServer(): Server {
       try {
         const method = request.method ?? "GET";
         const url = new URL(request.url ?? "/", "http://capacity.local");
-        const body = method === "POST" || method === "PUT" || method === "PATCH"
-          ? await readJsonBody(request)
-          : undefined;
+        const body = method === "POST" || method === "PUT" || method === "PATCH" ? await readJsonBody(request) : undefined;
         writeJson(response, routeApiRequest(method, url.pathname, body));
       } catch (error) {
         if (error instanceof SyntaxError) {
