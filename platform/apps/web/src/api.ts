@@ -54,14 +54,10 @@ interface ApiErrorPayload {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    ...init,
-    headers: {
-      ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...init?.headers,
-    },
-  });
+  const headers = new Headers(init?.headers);
+  if (init?.body && !headers.has("content-type")) headers.set("content-type", "application/json");
 
+  const response = await fetch(path, { ...init, headers });
   const payload = await response.json() as T | ApiErrorPayload;
   if (!response.ok) {
     const error = payload as ApiErrorPayload;
