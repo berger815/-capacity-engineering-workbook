@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
-import { createCapacityApiServer } from "./app.js";
+import { createCapacityApiServer } from "./appV2.js";
 
-export * from "./app.js";
+export * from "./appV2.js";
 
 export function startCapacityApi(port = Number(process.env.PORT ?? 3000), host = process.env.HOST ?? "127.0.0.1") {
   const server = createCapacityApiServer();
