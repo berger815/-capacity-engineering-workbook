@@ -49,6 +49,21 @@ export interface DemandImportPreview {
   };
 }
 
+export interface DecisionReportDownload {
+  filename: string;
+  mimeType: string;
+  content: string;
+  decision: {
+    classification: "supportable" | "conditional" | "notSupportable" | "incomplete";
+    statement: string;
+    baselineScenarioId: string;
+    comparisonScenarioId: string;
+    resolvedGapPeriods: number;
+    remainingGapPeriods: number;
+    worsenedGapPeriods: number;
+  };
+}
+
 interface ApiErrorPayload {
   code?: string;
   message?: string;
@@ -94,6 +109,18 @@ export function compareModels(
   return request<ScenarioComparisonResult>("/v1/compare", {
     method: "POST",
     body: JSON.stringify({ model, baselineScenarioId, comparisonScenarioId }),
+  });
+}
+
+export function generateDecisionReport(
+  model: CapacityModel,
+  baselineScenarioId: string,
+  comparisonScenarioId: string,
+  format: "html" | "json",
+): Promise<DecisionReportDownload> {
+  return request<DecisionReportDownload>("/v1/report/decision", {
+    method: "POST",
+    body: JSON.stringify({ model, baselineScenarioId, comparisonScenarioId, format }),
   });
 }
 
