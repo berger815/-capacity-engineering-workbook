@@ -85,8 +85,8 @@ describe("Capacity Assurance API", () => {
     const groupId = northstarRecoveryModel.resourceGroups[0]?.id ?? "";
     const csv = [
       "productId,revisionId,revision,effectiveFrom,effectiveTo,phaseId,phaseName,startWeeksBeforeShip,endWeeksBeforeShip,allocation,operationId,operationName,operationSequence,resourceGroupId,requirementState,requirementValue,setupRequirementState,setupRequirementValue,setupQuantity,batchSize",
-      `${productId},future-z,Z,2030-01-01,2030-12-31,p1,Build,8,4,spread,o1,Good operation,10,${groupId},value,2,,,,1`,
-      `${productId},future-z,Z,2030-01-01,2030-12-31,p1,Build,8,4,spread,o2,Bad operation,20,${groupId},invalid,2,,,,1`,
+      `${productId},future-z,Z,2025-01-01,2025-12-31,p1,Build,8,4,spread,o1,Good operation,10,${groupId},value,2,,,,1`,
+      `${productId},future-z,Z,2025-01-01,2025-12-31,p1,Build,8,4,spread,o2,Bad operation,20,${groupId},invalid,2,,,,1`,
     ].join("\n");
     const blocked = routeApiRequest("POST", "/v1/import/routing/apply", {
       model: northstarRecoveryModel,

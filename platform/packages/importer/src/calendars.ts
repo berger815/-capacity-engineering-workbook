@@ -118,7 +118,7 @@ export function importCalendarsCsv(
     const weeklyMinutes: WorkingCalendar["weeklyMinutes"] = {};
     dayValues.forEach((raw, dayIndex) => {
       const value = parseNumber(raw);
-      if (value !== null) weeklyMinutes[dayIndex as 0 | 1 | 2 | 3 | 4 | 5 | 6] = value;
+      if (value !== null && value > 0) weeklyMinutes[dayIndex as 0 | 1 | 2 | 3 | 4 | 5 | 6] = value;
     });
     records.push({ id, name, timezone, weeklyMinutes, exceptions: [] });
   });
