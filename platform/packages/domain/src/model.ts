@@ -150,6 +150,47 @@ export interface Scenario {
   assumptions?: Record<string, string | number | boolean>;
 }
 
+export type ScenarioActionStatus = "proposed" | "approved" | "implemented" | "rejected";
+export type ScenarioActionConfidence = "high" | "medium" | "low" | "unknown";
+
+export interface ScenarioActionBase {
+  id: Id;
+  scenarioId: Id;
+  name: string;
+  kind: "resourceQuantityDelta" | "resourceCapacityMultiplier" | "demandMultiplier";
+  included: boolean;
+  status: ScenarioActionStatus;
+  effectiveFrom: IsoDate;
+  effectiveTo?: IsoDate;
+  owner?: string;
+  rationale?: string;
+  confidence?: ScenarioActionConfidence;
+  source?: string;
+}
+
+export interface ResourceQuantityDeltaAction extends ScenarioActionBase {
+  kind: "resourceQuantityDelta";
+  resourceId: Id;
+  quantityDelta: number;
+}
+
+export interface ResourceCapacityMultiplierAction extends ScenarioActionBase {
+  kind: "resourceCapacityMultiplier";
+  resourceGroupId: Id;
+  multiplier: number;
+}
+
+export interface DemandMultiplierAction extends ScenarioActionBase {
+  kind: "demandMultiplier";
+  productId?: Id;
+  multiplier: number;
+}
+
+export type ScenarioAction =
+  | ResourceQuantityDeltaAction
+  | ResourceCapacityMultiplierAction
+  | DemandMultiplierAction;
+
 export interface CapacityModel {
   schemaVersion: string;
   modelId: Id;
@@ -165,6 +206,7 @@ export interface CapacityModel {
   routingRevisions: RoutingRevision[];
   scenarios: Scenario[];
   demand: DemandRecord[];
+  scenarioActions?: ScenarioAction[];
   metadata?: Record<string, string | number | boolean>;
 }
 
@@ -194,4 +236,32 @@ export interface CalculationResult {
   results: ResourcePeriodResult[];
   governingConstraint: ResourcePeriodResult | null;
   issues: ModelIssue[];
+  demandSourceScenarioId?: Id;
+  appliedActionIds?: Id[];
+}
+
+export interface ScenarioComparisonRow {
+  resourceGroupId: Id;
+  periodStart: IsoDate;
+  periodEnd: IsoDate;
+  baseline: ResourcePeriodResult;
+  comparison: ResourcePeriodResult;
+  loadDelta: number;
+  capacityDelta: number;
+  gapDelta: number;
+  utilizationDelta: number | null;
+}
+
+export interface ScenarioComparisonResult {
+  modelId: Id;
+  baselineScenarioId: Id;
+  comparisonScenarioId: Id;
+  generatedAt: string;
+  baseline: CalculationResult;
+  comparison: CalculationResult;
+  rows: ScenarioComparisonRow[];
+  resolvedGapPeriods: number;
+  remainingGapPeriods: number;
+  worsenedGapPeriods: number;
+  appliedActionIds: Id[];
 }
