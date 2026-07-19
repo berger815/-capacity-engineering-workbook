@@ -1,4 +1,4 @@
-name: Deploy Assessment Studio to GitHub Pages
+name: Build Assessment Studio for GitHub Pages
 
 on:
   push:
@@ -10,23 +10,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: github-pages
+  group: github-pages-build
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: platform
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Enable pnpm
         run: corepack enable
       - name: Set up Node
@@ -34,26 +31,34 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
+        working-directory: platform
         run: pnpm install --no-frozen-lockfile
-      - name: Build static Assessment Studio
+      - name: Build browser-only Assessment Studio
+        working-directory: platform
         run: pnpm build
         env:
           VITE_STATIC_DEMO: "true"
           VITE_BASE_PATH: "/capacity-engineering-workbook/"
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: platform/apps/web/dist
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Preserve the legacy workbook
+        run: |
+          if [ ! -f legacy/capacity-workbook-v6.86.html ]; then
+            mkdir -p legacy
+            cp index.html legacy/capacity-workbook-v6.86.html
+          fi
+      - name: Publish generated files to main
+        run: |
+          rm -rf assets
+          cp platform/apps/web/dist/index.html ./index.html
+          cp -R platform/apps/web/dist/assets ./assets
+          touch .nojekyll
+      - name: Commit generated Pages build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets .nojekyll legacy/capacity-workbook-v6.86.html
+          if git diff --cached --quiet; then
+            echo "Pages build is already current."
+            exit 0
+          fi
+          git commit -m "build(pages): publish Assessment Studio [skip ci]"
+          git push origin main
