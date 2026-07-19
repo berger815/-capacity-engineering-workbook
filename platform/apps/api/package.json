@@ -16,7 +16,8 @@
     "@capacity/domain": "workspace:*",
     "@capacity/engine": "workspace:*",
     "@capacity/fixtures": "workspace:*",
-    "@capacity/importer": "workspace:*"
+    "@capacity/importer": "workspace:*",
+    "@capacity/reporting": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.2.4"
