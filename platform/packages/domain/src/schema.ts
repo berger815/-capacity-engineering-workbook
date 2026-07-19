@@ -81,6 +81,54 @@ const scenarioSchema = z.object({
   assumptions: z.record(z.union([z.string(),z.number(),z.boolean()])).optional(),
 });
 
+const actionBaseShape = {
+  id,
+  scenarioId: id,
+  name: z.string().min(1),
+  included: z.boolean(),
+  status: z.enum(["proposed","approved","implemented","rejected"]),
+  effectiveFrom: isoDate,
+  effectiveTo: isoDate.optional(),
+  owner: z.string().optional(),
+  rationale: z.string().optional(),
+  confidence: z.enum(["high","medium","low","unknown"]).optional(),
+  source: z.string().optional(),
+};
+
+const resourceQuantityDeltaActionSchema = z.object({
+  ...actionBaseShape,
+  kind: z.literal("resourceQuantityDelta"),
+  resourceId: id,
+  quantityDelta: z.number().positive(),
+});
+
+const resourceCapacityMultiplierActionSchema = z.object({
+  ...actionBaseShape,
+  kind: z.literal("resourceCapacityMultiplier"),
+  resourceGroupId: id,
+  multiplier: z.number().nonnegative(),
+});
+
+const demandMultiplierActionSchema = z.object({
+  ...actionBaseShape,
+  kind: z.literal("demandMultiplier"),
+  productId: id.optional(),
+  multiplier: z.number().nonnegative(),
+});
+
+export const scenarioActionSchema = z.discriminatedUnion("kind", [
+  resourceQuantityDeltaActionSchema,
+  resourceCapacityMultiplierActionSchema,
+  demandMultiplierActionSchema,
+]).superRefine((action, ctx) => {
+  if (action.effectiveTo && action.effectiveTo < action.effectiveFrom) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "effectiveTo must be on or after effectiveFrom", path: ["effectiveTo"] });
+  }
+  if (action.status === "rejected" && action.included) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "a rejected action cannot be included in calculation", path: ["included"] });
+  }
+});
+
 const demandRecordSchema = z.object({
   id, scenarioId: id, productId: id, shipDate: isoDate, quantity: z.number().nonnegative(),
   demandClass: z.enum(["firm","forecast","upside","downside"]).optional(),
@@ -94,6 +142,7 @@ export const capacityModelSchema = z.object({
   resourceGroups: z.array(resourceGroupSchema).min(1), resources: z.array(resourceSchema),
   products: z.array(productSchema).min(1), routingRevisions: z.array(routingRevisionSchema),
   scenarios: z.array(scenarioSchema).min(1), demand: z.array(demandRecordSchema),
+  scenarioActions: z.array(scenarioActionSchema).optional(),
   metadata: z.record(z.union([z.string(),z.number(),z.boolean()])).optional(),
 }).superRefine((model, ctx) => {
   const unique = (values: string[], path: (string | number)[]) => {
@@ -107,6 +156,55 @@ export const capacityModelSchema = z.object({
   unique(model.routingRevisions.map(x=>x.id), ["routingRevisions"]);
   unique(model.scenarios.map(x=>x.id), ["scenarios"]);
   unique(model.demand.map(x=>x.id), ["demand"]);
+  unique((model.scenarioActions ?? []).map(x=>x.id), ["scenarioActions"]);
+
+  const scenarios = new Map(model.scenarios.map(item => [item.id, item]));
+  const resources = new Set(model.resources.map(item => item.id));
+  const resourceGroups = new Set(model.resourceGroups.map(item => item.id));
+  const products = new Set(model.products.map(item => item.id));
+
+  model.scenarios.forEach((scenario, index) => {
+    if (scenario.parentScenarioId && !scenarios.has(scenario.parentScenarioId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "parent scenario does not exist", path: ["scenarios", index, "parentScenarioId"] });
+    }
+    if (scenario.parentScenarioId === scenario.id) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "scenario cannot parent itself", path: ["scenarios", index, "parentScenarioId"] });
+    }
+  });
+
+  model.scenarios.forEach((scenario, index) => {
+    const visited = new Set<string>();
+    let cursor = scenario;
+    while (cursor.parentScenarioId) {
+      if (visited.has(cursor.id)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "scenario parent cycle detected", path: ["scenarios", index, "parentScenarioId"] });
+        break;
+      }
+      visited.add(cursor.id);
+      const parent = scenarios.get(cursor.parentScenarioId);
+      if (!parent) break;
+      cursor = parent;
+    }
+  });
+
+  (model.scenarioActions ?? []).forEach((action, index) => {
+    const scenario = scenarios.get(action.scenarioId);
+    if (!scenario) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "action scenario does not exist", path: ["scenarioActions", index, "scenarioId"] });
+    } else if (scenario.kind === "baseline") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "recovery actions cannot modify a baseline scenario", path: ["scenarioActions", index, "scenarioId"] });
+    }
+
+    if (action.kind === "resourceQuantityDelta" && !resources.has(action.resourceId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "action resource does not exist", path: ["scenarioActions", index, "resourceId"] });
+    }
+    if (action.kind === "resourceCapacityMultiplier" && !resourceGroups.has(action.resourceGroupId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "action resource group does not exist", path: ["scenarioActions", index, "resourceGroupId"] });
+    }
+    if (action.kind === "demandMultiplier" && action.productId && !products.has(action.productId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "action product does not exist", path: ["scenarioActions", index, "productId"] });
+    }
+  });
 });
 
 export type CapacityModelInput = z.input<typeof capacityModelSchema>;
