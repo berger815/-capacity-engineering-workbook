@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
-import { northstarV2Model } from "@capacity/fixtures";
+import { northstarRecoveryModel } from "@capacity/fixtures";
 import { createCapacityApiServer, routeApiRequest } from "./app.js";
 
 const openServers: Server[] = [];
@@ -24,13 +24,20 @@ afterEach(async () => {
 });
 
 describe("Capacity Assurance API", () => {
-  it("validates the canonical Northstar fixture", () => {
-    const response = routeApiRequest("POST", "/v1/validate", { model: northstarV2Model });
+  it("validates the canonical Northstar fixture and recovery plan", () => {
+    const response = routeApiRequest("POST", "/v1/validate", { model: northstarRecoveryModel });
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchObject({
       valid: true,
       modelId: "northstar-v2",
-      counts: { products: 4, resourceGroups: 12, routingRevisions: 4, demandRecords: 48 },
+      counts: {
+        products: 4,
+        resourceGroups: 12,
+        routingRevisions: 4,
+        demandRecords: 48,
+        scenarios: 2,
+        scenarioActions: 3,
+      },
     });
   });
 
@@ -42,7 +49,7 @@ describe("Capacity Assurance API", () => {
     ].join("\n");
 
     const response = routeApiRequest("POST", "/v1/import/demand/preview", {
-      model: northstarV2Model,
+      model: northstarRecoveryModel,
       scenarioId: "baseline",
       csv,
       mapping: demandMapping,
@@ -67,7 +74,7 @@ describe("Capacity Assurance API", () => {
     ].join("\n");
 
     const blocked = routeApiRequest("POST", "/v1/import/demand/apply", {
-      model: northstarV2Model,
+      model: northstarRecoveryModel,
       scenarioId: "baseline",
       csv,
       mapping: demandMapping,
@@ -76,7 +83,7 @@ describe("Capacity Assurance API", () => {
     expect(blocked.body).toMatchObject({ code: "IMPORT_HAS_REJECTED_ROWS" });
 
     const accepted = routeApiRequest("POST", "/v1/import/demand/apply", {
-      model: northstarV2Model,
+      model: northstarRecoveryModel,
       scenarioId: "baseline",
       csv,
       mapping: demandMapping,
@@ -90,7 +97,7 @@ describe("Capacity Assurance API", () => {
 
   it("calculates Northstar and pulls long-lead work into 2026", () => {
     const response = routeApiRequest("POST", "/v1/calculate", {
-      model: northstarV2Model,
+      model: northstarRecoveryModel,
       scenarioId: "baseline",
     });
     expect(response.statusCode).toBe(200);
@@ -106,6 +113,25 @@ describe("Capacity Assurance API", () => {
     expect(result.results.some(row => row.resourceGroupId === "rg-oven" && row.load > 0)).toBe(true);
   });
 
+  it("compares an immutable baseline with its governed recovery scenario", () => {
+    const response = routeApiRequest("POST", "/v1/compare", {
+      model: northstarRecoveryModel,
+      baselineScenarioId: "baseline",
+      comparisonScenarioId: "recovery-1",
+    });
+    expect(response.statusCode).toBe(200);
+
+    const comparison = response.body as {
+      appliedActionIds: string[];
+      rows: Array<{ resourceGroupId: string; periodStart: string; capacityDelta: number; loadDelta: number }>;
+      comparison: { demandSourceScenarioId: string };
+    };
+    expect(comparison.appliedActionIds).toHaveLength(3);
+    expect(comparison.comparison.demandSourceScenarioId).toBe("baseline");
+    expect(comparison.rows.some(row => row.resourceGroupId === "rg-oven" && row.periodStart === "2027-07-01" && row.capacityDelta > 0)).toBe(true);
+    expect(comparison.rows.every(row => row.loadDelta === 0)).toBe(true);
+  });
+
   it("rejects invalid models before calculation", () => {
     const response = routeApiRequest("POST", "/v1/calculate", {
       model: { modelId: "broken" },
@@ -115,7 +141,7 @@ describe("Capacity Assurance API", () => {
     expect(response.body).toMatchObject({ code: "MODEL_VALIDATION_FAILED" });
   });
 
-  it("serves the same behavior over HTTP", async () => {
+  it("serves scenario comparison over HTTP", async () => {
     const server = createCapacityApiServer();
     openServers.push(server);
     await new Promise<void>((resolve, reject) => {
@@ -124,15 +150,20 @@ describe("Capacity Assurance API", () => {
     });
 
     const address = server.address() as AddressInfo;
-    const response = await fetch(`http://127.0.0.1:${address.port}/v1/calculate`, {
+    const response = await fetch(`http://127.0.0.1:${address.port}/v1/compare`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model: northstarV2Model, scenarioId: "baseline" }),
+      body: JSON.stringify({
+        model: northstarRecoveryModel,
+        baselineScenarioId: "baseline",
+        comparisonScenarioId: "recovery-1",
+      }),
     });
 
     expect(response.status).toBe(200);
-    const body = await response.json() as { modelId: string; results: unknown[] };
+    const body = await response.json() as { modelId: string; rows: unknown[]; appliedActionIds: string[] };
     expect(body.modelId).toBe("northstar-v2");
-    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.rows.length).toBeGreaterThan(0);
+    expect(body.appliedActionIds).toHaveLength(3);
   });
 });
