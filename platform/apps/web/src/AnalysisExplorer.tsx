@@ -126,6 +126,23 @@ function LoadCapacityComboChart({ labels, load, capacity }: { labels: string[]; 
   </div>;
 }
 
+function DemandBarChart({ labels, values }: { labels: string[]; values: number[] }) {
+  const width = 980;
+  const height = 300;
+  const margin = { top: 20, right: 24, bottom: 54, left: 64 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const maximum = Math.max(1, ...values) * 1.08;
+  const groupWidth = plotWidth / Math.max(labels.length, 1);
+  const barWidth = Math.max(6, Math.min(42, groupWidth * .65));
+  const y = (value: number) => margin.top + plotHeight - value / maximum * plotHeight;
+  return <div className="chart-frame"><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Shipment demand bar chart">
+    {[0, .25, .5, .75, 1].map(fraction => { const value = maximum * fraction; return <g key={fraction}><line className="chart-grid" x1={margin.left} x2={width - margin.right} y1={y(value)} y2={y(value)} /><text className="chart-axis-label" x={margin.left - 8} y={y(value) + 4} textAnchor="end">{Math.round(value)}</text></g>; })}
+    {values.map((value, index) => <rect key={index} className="timeline-bar" x={margin.left + groupWidth * index + (groupWidth - barWidth) / 2} y={y(value)} width={barWidth} height={Math.max(1, margin.top + plotHeight - y(value))}><title>{`${labels[index]} · ${value}`}</title></rect>)}
+    {labels.map((label, index) => <text key={`${label}-${index}`} className="chart-x-label" x={margin.left + groupWidth * index + groupWidth / 2} y={height - 20} textAnchor="middle">{label}</text>)}
+  </svg></div>;
+}
+
 function GapBarChart({ labels, baseline, recovery }: { labels: string[]; baseline: number[]; recovery?: number[] }) {
   const width = 980;
   const height = 340;
@@ -191,7 +208,9 @@ function DemandExplorer({ model, scenarioId, resolution }: { model: CapacityMode
   function updateDemand(id: string, field: "productId" | "shipDate" | "quantity", value: string | number) {
     const record = model.demand.find(item => item.id === id);
     if (!record) return;
-    Object.assign(record, { [field]: value });
+    if (field === "quantity") record.quantity = Number(value);
+    else if (field === "productId") record.productId = String(value);
+    else record.shipDate = String(value);
     forceRender(value => value + 1);
   }
   function addDemand() {
@@ -207,7 +226,7 @@ function DemandExplorer({ model, scenarioId, resolution }: { model: CapacityMode
   }
   return <>
     <div className="explorer-subfilters"><label>Product<select value={productId} onChange={event => setProductId(event.target.value)}><option value="all">All products</option>{model.products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label><button className="secondary" type="button" onClick={addDemand}>Add demand row</button></div>
-    <div className="analysis-card wide"><div className="analysis-card-heading"><div><h3>Shipment demand profile</h3><p>Demand is shown as bars at ship date. Capacity load is shifted earlier by the lead-time model.</p></div></div><LoadCapacityComboChart labels={points.map(point => point.label)} load={points.map(point => point.quantity)} capacity={points.map(point => point.quantity)} /></div>
+    <div className="analysis-card wide"><div className="analysis-card-heading"><div><h3>Shipment demand profile</h3><p>Demand is shown as bars at ship date. Capacity load is shifted earlier by the lead-time model.</p></div></div><DemandBarChart labels={points.map(point => point.label)} values={points.map(point => point.quantity)} /></div>
     <div className="table-card"><div className="card-title-row"><div><h3>Imported demand detail</h3><small>Edit the current model here, then return to Calculate and rerun the baseline.</small></div></div><div className="table-wrap"><table><thead><tr><th>Product</th><th>Ship date</th><th className="number">Quantity</th><th>Class</th><th /></tr></thead><tbody>{records.map(record => <tr key={record.id}><td><select value={record.productId} onChange={event => updateDemand(record.id, "productId", event.target.value)}>{model.products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select></td><td><input type="date" value={record.shipDate} onChange={event => updateDemand(record.id, "shipDate", event.target.value)} /></td><td><input type="number" min="0" step="1" value={record.quantity} onChange={event => updateDemand(record.id, "quantity", Number(event.target.value))} /></td><td>{record.demandClass ?? "forecast"}</td><td><button className="text-danger" type="button" onClick={() => removeDemand(record.id)}>Remove</button></td></tr>)}</tbody></table></div></div>
     <div className="analysis-card wide"><div className="analysis-card-heading"><div><h3>Product mix</h3><p>Share of baseline demand across the selected horizon.</p></div><strong>{total.toLocaleString()} units</strong></div><div className="mix-list">{productTotals.map(item => <button type="button" key={item.product.id} onClick={() => setProductId(item.product.id)}><span><strong>{item.product.name}</strong><small>{item.quantity.toLocaleString()} units</small></span><span className="mix-track"><i style={{ width: `${total > 0 ? item.quantity / total * 100 : 0}%` }} /></span><b>{total > 0 ? `${Math.round(item.quantity / total * 100)}%` : "0%"}</b></button>)}</div></div>
   </>;
@@ -235,7 +254,10 @@ function LeadTimeExplorer({ model }: { model: CapacityModel }) {
   function updatePhase(phaseId: string, field: "name" | "startWeeksBeforeShip" | "endWeeksBeforeShip" | "allocation", value: string | number) {
     const phase = revision.phases.find(item => item.id === phaseId);
     if (!phase) return;
-    Object.assign(phase, { [field]: value });
+    if (field === "startWeeksBeforeShip") phase.startWeeksBeforeShip = Number(value);
+    else if (field === "endWeeksBeforeShip") phase.endWeeksBeforeShip = Number(value);
+    else if (field === "allocation") phase.allocation = value as typeof phase.allocation;
+    else phase.name = String(value);
     forceRender(current => current + 1);
   }
   return <>
