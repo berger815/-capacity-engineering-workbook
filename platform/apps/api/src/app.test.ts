@@ -6,6 +6,17 @@ import { createCapacityApiServer, routeApiRequest } from "./app.js";
 
 const openServers: Server[] = [];
 
+const demandMapping = {
+  productColumn: "product_id",
+  shipDateColumn: "ship_date",
+  quantityColumn: "quantity",
+  productMatch: "id",
+  dateFormat: "iso",
+  demandClassColumn: "class",
+  sourceRecordIdColumn: "record_id",
+  sourceSystem: "test-export",
+};
+
 afterEach(async () => {
   await Promise.all(openServers.splice(0).map(server => new Promise<void>((resolve, reject) => {
     server.close(error => error ? reject(error) : resolve());
@@ -21,6 +32,60 @@ describe("Capacity Assurance API", () => {
       modelId: "northstar-v2",
       counts: { products: 4, resourceGroups: 12, routingRevisions: 4, demandRecords: 48 },
     });
+  });
+
+  it("previews mapped demand with reconciliation totals", () => {
+    const csv = [
+      "product_id,ship_date,quantity,class,record_id",
+      "hx100,2027-10-15,10,forecast,R1",
+      "hx200,2027-11-15,5,firm,R2",
+    ].join("\n");
+
+    const response = routeApiRequest("POST", "/v1/import/demand/preview", {
+      model: northstarV2Model,
+      scenarioId: "baseline",
+      csv,
+      mapping: demandMapping,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchObject({
+      controlTotals: {
+        inputRows: 2,
+        acceptedRows: 2,
+        rejectedRows: 0,
+        totalQuantity: 15,
+      },
+    });
+  });
+
+  it("blocks partial demand replacement unless explicitly accepted", () => {
+    const csv = [
+      "product_id,ship_date,quantity,class,record_id",
+      "hx100,2027-10-15,10,forecast,R1",
+      "unknown,2027-11-15,5,firm,R2",
+    ].join("\n");
+
+    const blocked = routeApiRequest("POST", "/v1/import/demand/apply", {
+      model: northstarV2Model,
+      scenarioId: "baseline",
+      csv,
+      mapping: demandMapping,
+    });
+    expect(blocked.statusCode).toBe(422);
+    expect(blocked.body).toMatchObject({ code: "IMPORT_HAS_REJECTED_ROWS" });
+
+    const accepted = routeApiRequest("POST", "/v1/import/demand/apply", {
+      model: northstarV2Model,
+      scenarioId: "baseline",
+      csv,
+      mapping: demandMapping,
+      acceptPartial: true,
+    });
+    expect(accepted.statusCode).toBe(200);
+    const body = accepted.body as { model: { demand: unknown[] }; import: { controlTotals: { acceptedRows: number; rejectedRows: number } } };
+    expect(body.model.demand).toHaveLength(1);
+    expect(body.import.controlTotals).toMatchObject({ acceptedRows: 1, rejectedRows: 1 });
   });
 
   it("calculates Northstar and pulls long-lead work into 2026", () => {
