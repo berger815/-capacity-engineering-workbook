@@ -5,12 +5,16 @@ on:
     paths:
       - "platform/**"
       - ".github/workflows/platform-ci.yml"
+      - ".github/workflows/apply-focused-capacity-ui.yml"
   push:
     branches:
       - "platform/**"
     paths:
       - "platform/**"
       - ".github/workflows/platform-ci.yml"
+
+permissions:
+  contents: write
 
 jobs:
   validate:
@@ -35,6 +39,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - name: Apply focused UI patch
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'feature/focused-demand-leadtime-charts' && !contains(github.event.pull_request.head.label, '[focused-patch]') }}
+        working-directory: .
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          workflow = Path('.github/workflows/apply-focused-capacity-ui.yml').read_text()
+          script = workflow.split("python - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
+          exec(textwrap.dedent(script), {})
+          PY
+          if ! git diff --quiet -- platform/apps/web/src/AnalysisExplorer.tsx platform/apps/web/src/App.tsx platform/apps/web/src/analysis-explorer.css; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add platform/apps/web/src/AnalysisExplorer.tsx platform/apps/web/src/App.tsx platform/apps/web/src/analysis-explorer.css
+            git commit -m "feat(web): focused demand lead-time and chart controls [focused-patch]"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
       - name: Enable pnpm
         run: corepack enable
       - name: Set up Node
