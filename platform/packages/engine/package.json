@@ -21,6 +21,7 @@
     "@capacity/domain": "workspace:*"
   },
   "devDependencies": {
+    "@capacity/fixtures": "workspace:*",
     "vitest": "^3.2.4"
   }
 }
