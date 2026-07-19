@@ -8,19 +8,19 @@ The root `index.html` remains the reference implementation for proven domain beh
 
 The platform answers:
 
-> Can this plant or supplier meet committed demand, what constraint fails first, and what recovery action closes the gap credibly?
+> Can this plant or supplier meet committed demand, what constraint fails first, why does it fail, and what recovery action closes the gap credibly?
 
 It is not an ERP, MRP, MES, finite scheduler, dispatching system, or accounting product.
 
 ## Architecture
 
-- `packages/domain` — vendor-neutral canonical manufacturing-capacity model, scenario actions, comparisons, and runtime validation.
-- `packages/engine` — deterministic, headless baseline, recovery, lead-time, and capacity calculation engine.
+- `packages/domain` — vendor-neutral canonical manufacturing-capacity, scenario, comparison, and explanation contracts.
+- `packages/engine` — deterministic baseline, recovery, lead-time, capacity, comparison, and load-explanation engine.
 - `packages/fixtures` — canonical synthetic regression and demonstration models.
 - `packages/importer` — dependency-free CSV parsing, reusable demand mappings, row validation, and control totals.
 - `packages/reporting` — portable assessment snapshots and standalone printable executive decision reports.
-- `apps/api` — runnable HTTP import, validation, calculation, comparison, and reporting service.
-- `apps/web` — guided Assessment Studio from scope through recovery and decision export.
+- `apps/api` — HTTP import, validation, calculation, comparison, explanation, and reporting service.
+- `apps/web` — guided Assessment Studio from scope through recovery, explainability, and decision export.
 - `database/migrations` — normalized PostgreSQL persistence contract, including recovery action and comparison lineage.
 
 ## Modeling principles
@@ -37,12 +37,13 @@ It is not an ERP, MRP, MES, finite scheduler, dispatching system, or accounting 
 10. Imports report control totals and rejected rows; bad data never silently becomes zero.
 11. The guided interface uses progressive disclosure: decision first, details on demand.
 12. A recovery scenario never mutates its protected baseline.
+13. Every explained period load must reconcile to its calculated load.
 
 ## Current vertical slice
 
 The working slice includes:
 
-- canonical organization, product, routing, resource, calendar, scenario, demand, and recovery-action entities;
+- canonical organization, product, routing, resource, calendar, scenario, demand, recovery-action, comparison, and explanation entities;
 - runtime schema validation, target validation, scenario lineage checks, and action governance;
 - monthly or weekly periods;
 - date-based calendar capacity;
@@ -58,16 +59,17 @@ The working slice includes:
 - reusable demand column mappings with ID, name, or external-key product matching;
 - ISO and U.S. date parsing, row-level errors, and reconciliation totals;
 - atomic scenario demand replacement with explicit partial-import opt-in;
-- runnable HTTP endpoints for health, fixture retrieval, validation, demand import, calculation, comparison, and reporting;
+- HTTP endpoints for health, fixture retrieval, validation, demand import, calculation, comparison, explanation, and reporting;
 - guided browser workflow: Scope → Data → Readiness → Analysis → Recovery → Decision;
 - named recovery actions with target, effective dates, owner, approval state, confidence, and audit-preserving rejection;
-- executive decision summary and ranked constraint-period table;
+- explainable drill-through from a resource period to product, demand record, routing revision, operation, standard, setup, and lead-time allocation;
+- explicit explained-versus-calculated load reconciliation;
 - downloadable standalone HTML executive report;
 - downloadable portable JSON assessment containing the complete model, comparison, action lineage, assumptions, and results;
 - responsive desktop, tablet, and phone layout;
 - PostgreSQL migrations for identity, tenancy, model entities, source lineage, imports, calculations, recovery actions, action snapshots, scenario comparisons, results, and audit;
 - CI execution of every migration against a clean PostgreSQL 16 service;
-- automated domain, engine, fixture, importer, API, reporting, HTTP integration, and web tests.
+- automated domain, engine, fixture, importer, API, reporting, explanation, HTTP integration, and web tests.
 
 ## Commands
 
@@ -92,9 +94,10 @@ pnpm dev
 - `POST /v1/import/demand/apply` with the preview payload and optional `acceptPartial: true`
 - `POST /v1/calculate` with `{ "model": ..., "scenarioId": "..." }`
 - `POST /v1/compare` with `{ "model": ..., "baselineScenarioId": "...", "comparisonScenarioId": "..." }`
+- `POST /v1/explain` with `{ "model": ..., "scenarioId": "...", "resourceGroupId": "...", "periodStart": "YYYY-MM-DD" }`
 - `POST /v1/report/decision` with the comparison payload and `format: "html" | "json"`
 
-All import, calculation, comparison, and report input is runtime-validated before it changes a model or reaches the engine.
+All import, calculation, comparison, explanation, and report input is runtime-validated before it changes a model or reaches the engine.
 
 ## Build gates
 
@@ -103,11 +106,12 @@ Before this branch is ready to merge:
 - CI is green.
 - All PostgreSQL migrations execute against a clean database.
 - Northstar synthetic baseline and recovery cases are represented in the canonical schema.
-- Golden calculations reproduce the intended lead-time, routing, and recovery behavior.
+- Golden calculations reproduce the intended lead-time, routing, recovery, and explanation behavior.
 - Missing and not-applicable inputs cannot silently become zero.
 - Demand import exposes accepted/rejected rows and control totals.
-- The API validates every import, calculation, comparison, and report request.
+- The API validates every import, calculation, comparison, explanation, and report request.
 - The guided workflow reaches a baseline-versus-recovery decision without direct API use.
+- Constraint detail reconciles to the selected calculated period.
 - The decision can be exported as both an executive report and a portable assessment snapshot.
 - No changes are made to the legacy `index.html`.
 
@@ -118,4 +122,3 @@ Before this branch is ready to merge:
 3. PostgreSQL repository implementation for saved assessments and immutable runs.
 4. Authentication, tenant enforcement, and deployment configuration.
 5. Performance benchmark at the R0 market-entry scale.
-6. Explainable drill-through from a constraint to contributing products, operations, standards, and demand records.
