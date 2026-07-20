@@ -10,6 +10,7 @@ import type {
   Scenario,
   ScenarioAction,
 } from "@capacity/domain";
+import { canonicalProgramRequirements } from "@capacity/domain";
 import { calculateCapacity } from "./index.js";
 
 const DAY_MS = 86_400_000;
@@ -83,13 +84,9 @@ function adjustedDemandQuantity(demand: DemandRecord, actions: ScenarioAction[])
 }
 
 function revisionForDemand(revisions: RoutingRevision[], demand: DemandRecord): RoutingRevision | undefined {
-  return revisionForProductAt(revisions, demand.productId, demand.shipDate);
-}
-
-function revisionForProductAt(revisions: RoutingRevision[], productId: string, date: string): RoutingRevision | undefined {
   return revisions
-    .filter(revision => revision.productId === productId)
-    .filter(revision => revision.effectiveFrom <= date && (!revision.effectiveTo || revision.effectiveTo >= date))
+    .filter(revision => revision.productId === demand.productId)
+    .filter(revision => revision.effectiveFrom <= demand.shipDate && (!revision.effectiveTo || revision.effectiveTo >= demand.shipDate))
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
 }
 
@@ -120,9 +117,7 @@ function phaseAllocation(phase: LeadTimePhase, shipDate: string, start: Date, en
 
 function summarizeProducts(contributions: LoadContribution[], totalLoad: number): ProductLoadSummary[] {
   const grouped = new Map<string, LoadContribution[]>();
-  for (const contribution of contributions) {
-    grouped.set(contribution.productId, [...(grouped.get(contribution.productId) ?? []), contribution]);
-  }
+  for (const contribution of contributions) grouped.set(contribution.productId, [...(grouped.get(contribution.productId) ?? []), contribution]);
   return [...grouped.entries()].map(([productId, rows]) => {
     const load = rows.reduce((sum, row) => sum + row.totalLoad, 0);
     const dates = rows.map(row => row.shipDate).sort();
@@ -224,48 +219,43 @@ export function explainConstraint(
   }
 
   for (const program of model.programs ?? []) {
-    for (const productId of program.productIds) {
-      const revision = revisionForProductAt(model.routingRevisions, productId, program.anchorDate);
-      if (!revision) continue;
-      const phases = new Map(revision.phases.map(phase => [phase.id, phase]));
-      for (const operation of revision.operations) {
-        const phase = phases.get(operation.phaseId);
-        if (!phase) continue;
-        for (const requirement of operation.requirements.filter(item => item.resourceGroupId === resourceGroupId)) {
-          const basis = requirement.basis ?? "perUnit";
-          const value = requirement.requirement;
-          if (basis === "perUnit" || value.state !== "value" || value.value === undefined) continue;
-          const allocation = basis === "perProgram"
-            ? phaseAllocation(phase, program.anchorDate, start, end)
-            : overlapDays(parseDate(program.anchorDate), parseDate(program.endDate ?? model.horizonEnd), start, end) > 0 ? 1 : 0;
-          const totalLoad = value.value * allocation;
-          if (totalLoad === 0) continue;
-          contributions.push({
-            scenarioId,
-            resourceGroupId,
-            periodStart: result.periodStart,
-            periodEnd: result.periodEnd,
-            demandId: `program:${program.id}`,
-            productId,
-            routingRevisionId: revision.id,
-            operationId: operation.id,
-            operationName: operation.name,
-            requirementId: requirement.id,
-            basis,
-            programId: program.id,
-            phaseId: phase.id,
-            phaseName: phase.name,
-            shipDate: program.anchorDate,
-            originalDemandQuantity: 1,
-            adjustedDemandQuantity: 1,
-            phaseAllocation: allocation,
-            unitRequirement: value.value,
-            setupLoad: 0,
-            runLoad: totalLoad,
-            totalLoad,
-          });
-        }
-      }
+    const canonical = canonicalProgramRequirements(model, program);
+    for (const record of canonical.records) {
+      const { requirement, basis, phase, productId, revisionId, operationId } = record;
+      if (requirement.resourceGroupId !== resourceGroupId) continue;
+      const value = requirement.requirement;
+      if (value.state !== "value" || value.value === undefined) continue;
+      const allocation = basis === "perProgram"
+        ? phaseAllocation(phase, program.anchorDate, start, end)
+        : overlapDays(parseDate(program.anchorDate), parseDate(program.endDate ?? model.horizonEnd), start, end) > 0 ? 1 : 0;
+      const totalLoad = value.value * allocation;
+      if (totalLoad === 0) continue;
+      const revision = model.routingRevisions.find(item => item.id === revisionId);
+      const operation = revision?.operations.find(item => item.id === operationId);
+      contributions.push({
+        scenarioId,
+        resourceGroupId,
+        periodStart: result.periodStart,
+        periodEnd: result.periodEnd,
+        demandId: `program:${program.id}`,
+        productId,
+        routingRevisionId: revisionId,
+        operationId,
+        operationName: operation?.name ?? "Program requirement",
+        requirementId: requirement.id,
+        basis,
+        programId: program.id,
+        phaseId: phase.id,
+        phaseName: phase.name,
+        shipDate: program.anchorDate,
+        originalDemandQuantity: 1,
+        adjustedDemandQuantity: 1,
+        phaseAllocation: allocation,
+        unitRequirement: value.value,
+        setupLoad: 0,
+        runLoad: totalLoad,
+        totalLoad,
+      });
     }
   }
 
