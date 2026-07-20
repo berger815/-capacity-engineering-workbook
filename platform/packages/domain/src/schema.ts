@@ -38,7 +38,7 @@ const workingCalendarSchema = z.object({
 const resourceGroupSchema = z.object({
   id, name: z.string().min(1), organizationNodeId: id,
   kind: z.enum(["labor","equipment","skill","tooling","space","external","other"]),
-  capacityUnit: capacityUnitSchema, calendarId: id, pooled: z.boolean(),
+  capacityUnit: capacityUnitSchema, calendarId: id, pooled: z.boolean(), indirect: z.boolean().optional(),
   tags: z.array(z.string()).optional(), externalKeys: z.record(z.string()).optional(),
 });
 
