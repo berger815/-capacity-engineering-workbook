@@ -2,11 +2,13 @@ import { capacityModelSchema, type CapacityModel } from "@capacity/domain";
 import {
   importCalendarsCsv,
   importProductsCsv,
+  importProgramsCsv,
   importResourceGroupsCsv,
   importResourcesCsv,
   importRoutingCsv,
   mergeCalendarsImport,
   mergeProductsImport,
+  mergeProgramsImport,
   mergeResourceGroupsImport,
   mergeResourcesImport,
   mergeRoutingImport,
@@ -15,13 +17,14 @@ import {
   type ImportResult,
   type MergeMode,
   type ProductCsvMapping,
+  type ProgramCsvMapping,
   type ResourceCsvMapping,
   type ResourceGroupCsvMapping,
   type RoutingCsvMapping,
 } from "@capacity/importer";
 import type { ApiResult } from "./app.js";
 
-type EntityRoute = "calendars" | "resource-groups" | "resources" | "products" | "routing";
+type EntityRoute = "calendars" | "resource-groups" | "resources" | "products" | "programs" | "routing";
 type ActionRoute = "preview" | "apply";
 
 interface ImportRequest {
@@ -39,7 +42,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function parseRoute(path: string): { entity: EntityRoute; action: ActionRoute } | null {
-  const match = /^\/v1\/import\/(calendars|resource-groups|resources|products|routing)\/(preview|apply)$/.exec(path);
+  const match = /^\/v1\/import\/(calendars|resource-groups|resources|products|programs|routing)\/(preview|apply)$/.exec(path);
   if (!match) return null;
   return { entity: match[1] as EntityRoute, action: match[2] as ActionRoute };
 }
@@ -99,6 +102,8 @@ function preview(entity: EntityRoute, request: ImportRequest): ImportResult<unkn
       return importResourcesCsv(request.csv, request.model, request.mapping as unknown as ResourceCsvMapping, request.mode) as ImportResult<unknown>;
     case "products":
       return importProductsCsv(request.csv, request.model, request.mapping as unknown as ProductCsvMapping, request.mode) as ImportResult<unknown>;
+    case "programs":
+      return importProgramsCsv(request.csv, request.model, request.mapping as unknown as ProgramCsvMapping, request.mode) as ImportResult<unknown>;
     case "routing":
       return importRoutingCsv(request.csv, request.model, request.mapping as unknown as RoutingCsvMapping) as ImportResult<unknown>;
   }
@@ -114,6 +119,8 @@ function apply(entity: EntityRoute, request: ImportRequest, imported: ImportResu
       return mergeResourcesImport(request.model, imported.records as CapacityModel["resources"], request.mode);
     case "products":
       return mergeProductsImport(request.model, imported.records as CapacityModel["products"], request.mode);
+    case "programs":
+      return mergeProgramsImport(request.model, imported.records as NonNullable<CapacityModel["programs"]>, request.mode);
     case "routing":
       return mergeRoutingImport(request.model, imported.records as CapacityModel["routingRevisions"]);
   }

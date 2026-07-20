@@ -1,4 +1,4 @@
-import type { Id, IsoDate, ModelIssue, ResourcePeriodResult } from "./model.js";
+import type { Id, IsoDate, ModelIssue, RequirementBasis, ResourcePeriodResult } from "./model.js";
 
 export interface LoadContribution {
   scenarioId: Id;
@@ -11,6 +11,8 @@ export interface LoadContribution {
   operationId: Id;
   operationName: string;
   requirementId: Id;
+  basis?: RequirementBasis;
+  programId?: Id;
   phaseId: Id;
   phaseName: string;
   shipDate: IsoDate;

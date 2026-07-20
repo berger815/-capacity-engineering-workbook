@@ -4,6 +4,7 @@ import type {
   DemandRecord,
   LeadTimePhase,
   ModelIssue,
+  Program,
   ResourceGroup,
   ResourcePeriodResult,
   RoutingRevision,
@@ -12,6 +13,7 @@ import type {
   ScenarioComparisonResult,
   WorkingCalendar,
 } from "@capacity/domain";
+import { collectModelIssues } from "@capacity/domain";
 
 const DAY_MS = 86_400_000;
 
@@ -119,11 +121,20 @@ function actionsForScenario(model: CapacityModel, scenarioId: string): ScenarioA
 }
 
 function revisionForDemand(revisions: RoutingRevision[], demand: DemandRecord): RoutingRevision | undefined {
-  const date = demand.shipDate;
+  return revisionForProductAt(revisions, demand.productId, demand.shipDate);
+}
+
+function revisionForProductAt(revisions: RoutingRevision[], productId: string, date: string): RoutingRevision | undefined {
   return revisions
-    .filter(revision => revision.productId === demand.productId)
+    .filter(revision => revision.productId === productId)
     .filter(revision => revision.effectiveFrom <= date && (!revision.effectiveTo || revision.effectiveTo >= date))
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
+}
+
+function addIssueOnce(issues: ModelIssue[], issue: ModelIssue): void {
+  if (!issues.some(current => current.code === issue.code && current.entityType === issue.entityType && current.entityId === issue.entityId)) {
+    issues.push(issue);
+  }
 }
 
 function phaseDates(shipDate: string, phase: LeadTimePhase): { start: Date; end: Date } {
@@ -228,9 +239,10 @@ function loadForPeriod(
       const allocation = phaseAllocation(phase, demand.shipDate, period);
       if (allocation === 0) continue;
       for (const requirement of operation.requirements.filter(item => item.resourceGroupId === groupId)) {
+        if ((requirement.basis ?? "perUnit") !== "perUnit") continue;
         const value = requirement.requirement;
         if (value.state === "missing") {
-          issues.push({ severity: "warning", code: "REQUIREMENT_MISSING", message: `Missing requirement ${requirement.id}`, entityType: "routingRequirement", entityId: requirement.id });
+          addIssueOnce(issues, { severity: "warning", code: "REQUIREMENT_MISSING", message: `Missing requirement ${requirement.id}`, entityType: "routingRequirement", entityId: requirement.id });
           continue;
         }
         if (value.state !== "value" || value.value === undefined) continue;
@@ -247,8 +259,47 @@ function loadForPeriod(
   return load;
 }
 
+function programLoadForPeriod(
+  model: CapacityModel,
+  program: Program,
+  groupId: string,
+  period: { start: Date; end: Date },
+  issues: ModelIssue[],
+): number {
+  let load = 0;
+  for (const productId of program.productIds) {
+    const revision = revisionForProductAt(model.routingRevisions, productId, program.anchorDate);
+    if (!revision) continue;
+    const phases = new Map(revision.phases.map(phase => [phase.id, phase]));
+    for (const operation of revision.operations) {
+      const phase = phases.get(operation.phaseId);
+      if (!phase) {
+        addIssueOnce(issues, { severity: "error", code: "PHASE_MISSING", message: `Operation ${operation.id} references missing phase ${operation.phaseId}`, entityType: "operation", entityId: operation.id });
+        continue;
+      }
+      for (const requirement of operation.requirements.filter(item => item.resourceGroupId === groupId)) {
+        const basis = requirement.basis ?? "perUnit";
+        if (basis === "perUnit") continue;
+        const value = requirement.requirement;
+        if (value.state === "missing") {
+          addIssueOnce(issues, { severity: "warning", code: "REQUIREMENT_MISSING", message: `Missing requirement ${requirement.id}`, entityType: "routingRequirement", entityId: requirement.id });
+          continue;
+        }
+        if (value.state !== "value" || value.value === undefined) continue;
+        if (basis === "perProgram") {
+          load += value.value * phaseAllocation(phase, program.anchorDate, period);
+          continue;
+        }
+        const activeEnd = parseDate(program.endDate ?? model.horizonEnd);
+        if (overlapDays(parseDate(program.anchorDate), activeEnd, period.start, period.end) > 0) load += value.value;
+      }
+    }
+  }
+  return load;
+}
+
 export function calculateCapacity(model: CapacityModel, scenarioId: string): CalculationResult {
-  const issues: ModelIssue[] = [];
+  const issues: ModelIssue[] = collectModelIssues(model);
   const demandSelection = demandForScenario(model, scenarioId);
   const actions = actionsForScenario(model, scenarioId);
   const periods = enumeratePeriods(model.horizonStart, model.horizonEnd, model.planningGranularity);
@@ -257,7 +308,12 @@ export function calculateCapacity(model: CapacityModel, scenarioId: string): Cal
   for (const group of model.resourceGroups) {
     for (const period of periods) {
       const capacity = capacityForPeriod(model, group, period.start, period.end, actions);
-      const load = loadForPeriod(model, demandSelection.records, group.id, period, actions, issues);
+      const demandLoad = loadForPeriod(model, demandSelection.records, group.id, period, actions, issues);
+      const programLoad = (model.programs ?? []).reduce(
+        (sum, program) => sum + programLoadForPeriod(model, program, group.id, period, issues),
+        0,
+      );
+      const load = demandLoad + programLoad;
       const gap = capacity - load;
       results.push({
         scenarioId,
@@ -345,6 +401,8 @@ export const engineInternals = {
   availableMinutes,
   phaseDates,
   phaseAllocation,
+  revisionForProductAt,
+  programLoadForPeriod,
   resolveScenarioChain,
   demandForScenario,
   actionsForScenario,

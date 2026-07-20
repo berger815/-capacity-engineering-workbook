@@ -2,6 +2,7 @@ export * from "./csv.js";
 export * from "./shared.js";
 export * from "./demand.js";
 export * from "./products.js";
+export * from "./programs.js";
 export * from "./calendars.js";
 export * from "./resourceGroups.js";
 export * from "./resources.js";

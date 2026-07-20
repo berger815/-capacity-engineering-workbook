@@ -17,6 +17,7 @@ export type CapacityUnit =
   | "palletPositions"
   | "custom";
 export type ApplicabilityState = "notApplicable" | "missing" | "zero" | "value";
+export type RequirementBasis = "perUnit" | "perProgram" | "perPeriod";
 export type PhaseAllocation =
   | "spread"
   | "shiftToStart"
@@ -53,6 +54,8 @@ export interface ResourceGroup {
   capacityUnit: CapacityUnit;
   calendarId: Id;
   pooled: boolean;
+  /** Presentation-only classification. The capacity engine treats both classes identically. */
+  indirect?: boolean;
   tags?: string[];
   externalKeys?: Record<string, string>;
 }
@@ -80,6 +83,16 @@ export interface Product {
   tags?: string[];
 }
 
+export interface Program {
+  id: Id;
+  name: string;
+  productIds: Id[];
+  anchorDate: IsoDate;
+  endDate?: IsoDate;
+  externalKeys?: Record<string, string>;
+  tags?: string[];
+}
+
 export interface LeadTimePhase {
   id: Id;
   name: string;
@@ -100,6 +113,8 @@ export interface RoutingRequirement {
   id: Id;
   resourceGroupId: Id;
   requirement: RequirementValue;
+  /** Defaults to perUnit when absent for backward compatibility. */
+  basis?: RequirementBasis;
   setupQuantity?: number;
   setupRequirement?: RequirementValue;
   batchSize?: number;
@@ -107,6 +122,7 @@ export interface RoutingRequirement {
 
 export interface RoutingOperation {
   id: Id;
+  /** Descriptive ordering only; the aggregate capacity engine does not simulate flow or queues. */
   sequence: number;
   name: string;
   phaseId: Id;
@@ -141,6 +157,14 @@ export interface DemandRecord {
 }
 
 export type ActionLogCategory = "data" | "assumption" | "risk" | "decision" | "followUp" | "general";
+export type ActionStatus = "open" | "inProgress" | "blocked" | "complete" | "verified" | "cancelled";
+
+export interface ActionStatusChange {
+  status: ActionStatus;
+  at: string;
+  by?: string;
+  note?: string;
+}
 
 export interface ActionLogEntry {
   id: Id;
@@ -152,7 +176,22 @@ export interface ActionLogEntry {
   relatedEntityId?: Id;
   owner?: string;
   dueDate?: IsoDate;
+  status: ActionStatus;
+  statusHistory?: ActionStatusChange[];
+  verifiedAt?: string;
+  verifiedBy?: string;
+  evidenceNote?: string;
+  raisedInAssessmentId?: Id;
+  supplierId?: Id;
+  /** @deprecated Read for one compatibility version; use status and statusHistory. */
   resolvedAt?: string;
+}
+
+export interface SupplierRef {
+  supplierId: Id;
+  supplierName: string;
+  site?: string;
+  externalKeys?: Record<string, string>;
 }
 
 export type PlanningWipBasis = "estimated" | "reported" | "derived";
@@ -249,6 +288,7 @@ export interface CapacityModel {
   resourceGroups: ResourceGroup[];
   resources: Resource[];
   products: Product[];
+  programs?: Program[];
   routingRevisions: RoutingRevision[];
   scenarios: Scenario[];
   demand: DemandRecord[];
@@ -256,6 +296,8 @@ export interface CapacityModel {
   actionLog?: ActionLogEntry[];
   footprintPlans?: FootprintPlan[];
   planningWip?: PlanningWipRecord[];
+  supplier?: SupplierRef;
+  assessmentDate?: IsoDate;
   metadata?: Record<string, string | number | boolean>;
 }
 

@@ -53,6 +53,23 @@ const productSchema = z.object({
   externalKeys: z.record(z.string()).optional(), tags: z.array(z.string()).optional(),
 });
 
+const programSchema = z.object({
+  id,
+  name: z.string().min(1),
+  productIds: z.array(id),
+  anchorDate: isoDate,
+  endDate: isoDate.optional(),
+  externalKeys: z.record(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+}).superRefine((program, ctx) => {
+  if (new Set(program.productIds).size !== program.productIds.length) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "program contains duplicate product ids", path: ["productIds"] });
+  }
+  if (program.endDate && program.endDate < program.anchorDate) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "endDate must be on or after anchorDate", path: ["endDate"] });
+  }
+});
+
 const leadTimePhaseSchema = z.object({
   id, name: z.string().min(1), startWeeksBeforeShip: z.number().nonnegative(), endWeeksBeforeShip: z.number().nonnegative(),
   allocation: z.enum(["spread","shiftToStart","shiftToEnd","shiftToMidpoint"]),
@@ -60,6 +77,7 @@ const leadTimePhaseSchema = z.object({
 
 const routingRequirementSchema = z.object({
   id, resourceGroupId: id, requirement: requirementValueSchema,
+  basis: z.enum(["perUnit","perProgram","perPeriod"]).optional(),
   setupQuantity: z.number().nonnegative().optional(), setupRequirement: requirementValueSchema.optional(), batchSize: z.number().positive().optional(),
 });
 
@@ -135,7 +153,14 @@ const demandRecordSchema = z.object({
   customerOrProgram: z.string().optional(), sourceSystem: z.string().optional(), sourceRecordId: z.string().optional(),
 });
 
-const actionLogEntrySchema = z.object({
+const actionStatusSchema = z.enum(["open","inProgress","blocked","complete","verified","cancelled"]);
+
+const actionLogEntrySchema = z.preprocess(value => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const entry = value as Record<string, unknown>;
+  if (entry.status !== undefined) return value;
+  return { ...entry, status: typeof entry.resolvedAt === "string" ? "complete" : "open" };
+}, z.object({
   id,
   createdAt: z.string().datetime(),
   createdBy: z.string().optional(),
@@ -145,7 +170,25 @@ const actionLogEntrySchema = z.object({
   relatedEntityId: id.optional(),
   owner: z.string().optional(),
   dueDate: isoDate.optional(),
+  status: actionStatusSchema,
+  statusHistory: z.array(z.object({ status: actionStatusSchema, at: z.string().datetime(), by: z.string().optional(), note: z.string().optional() })).optional(),
+  verifiedAt: z.string().datetime().optional(),
+  verifiedBy: z.string().optional(),
+  evidenceNote: z.string().optional(),
+  raisedInAssessmentId: id.optional(),
+  supplierId: id.optional(),
   resolvedAt: z.string().datetime().optional(),
+}).superRefine((entry, ctx) => {
+  if (entry.status === "verified" && !entry.verifiedAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "verified status requires verifiedAt", path: ["verifiedAt"] });
+  }
+}));
+
+const supplierRefSchema = z.object({
+  supplierId: id,
+  supplierName: z.string().min(1),
+  site: z.string().optional(),
+  externalKeys: z.record(z.string()).optional(),
 });
 
 const planningWipRecordSchema = z.object({
@@ -187,11 +230,14 @@ export const capacityModelSchema = z.object({
   organization: z.array(organizationNodeSchema).min(1), calendars: z.array(workingCalendarSchema).min(1),
   resourceGroups: z.array(resourceGroupSchema).min(1), resources: z.array(resourceSchema),
   products: z.array(productSchema).min(1), routingRevisions: z.array(routingRevisionSchema),
+  programs: z.array(programSchema).optional(),
   scenarios: z.array(scenarioSchema).min(1), demand: z.array(demandRecordSchema),
   scenarioActions: z.array(scenarioActionSchema).optional(),
   actionLog: z.array(actionLogEntrySchema).optional(),
   footprintPlans: z.array(footprintPlanSchema).optional(),
   planningWip: z.array(planningWipRecordSchema).optional(),
+  supplier: supplierRefSchema.optional(),
+  assessmentDate: isoDate.optional(),
   metadata: z.record(z.union([z.string(),z.number(),z.boolean()])).optional(),
 }).superRefine((model, ctx) => {
   const unique = (values: string[], path: (string | number)[]) => {
@@ -202,6 +248,7 @@ export const capacityModelSchema = z.object({
   unique(model.resourceGroups.map(x=>x.id), ["resourceGroups"]);
   unique(model.resources.map(x=>x.id), ["resources"]);
   unique(model.products.map(x=>x.id), ["products"]);
+  unique((model.programs ?? []).map(x=>x.id), ["programs"]);
   unique(model.routingRevisions.map(x=>x.id), ["routingRevisions"]);
   unique(model.scenarios.map(x=>x.id), ["scenarios"]);
   unique(model.demand.map(x=>x.id), ["demand"]);
@@ -216,6 +263,28 @@ export const capacityModelSchema = z.object({
   const products = new Set(model.products.map(item => item.id));
   const calendars = new Set(model.calendars.map(item => item.id));
   const organization = new Set(model.organization.map(item => item.id));
+  const programByProduct = new Map<string, string>();
+
+  (model.programs ?? []).forEach((program, programIndex) => {
+    program.productIds.forEach((productId, productIndex) => {
+      if (!products.has(productId)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "program product does not exist", path: ["programs", programIndex, "productIds", productIndex] });
+      }
+      const existing = programByProduct.get(productId);
+      if (existing) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `PRODUCT_IN_MULTIPLE_PROGRAMS: product also belongs to ${existing}`, path: ["programs", programIndex, "productIds", productIndex] });
+      } else {
+        programByProduct.set(productId, program.id);
+      }
+    });
+  });
+
+  model.routingRevisions.forEach((revision, revisionIndex) => {
+    const needsProgram = revision.operations.some(operation => operation.requirements.some(requirement => (requirement.basis ?? "perUnit") !== "perUnit"));
+    if (needsProgram && !programByProduct.has(revision.productId)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "PROGRAM_MISSING: non-per-unit requirement requires a program", path: ["routingRevisions", revisionIndex, "productId"] });
+    }
+  });
 
   model.scenarios.forEach((scenario, index) => {
     if (scenario.parentScenarioId && !scenarios.has(scenario.parentScenarioId)) {

@@ -20,7 +20,7 @@ function model(): CapacityModel {
     demand: [{ id: "demand", scenarioId: "baseline", productId: "product", shipDate: "2027-06-15", quantity: 20 }],
     footprintPlans: [{ id: "plan", departmentOrArea: "Staging", organizationNodeId: "site", calendarId: "calendar", productId: "product", dwellWorkingDays: 5, spacePerUnit: 20, basis: "squareFeet", availableCapacity: 1000, peakFactor: 1.2, confidence: "medium" }],
     planningWip: [{ id: "wip", scenarioId: "baseline", productId: "product", periodStart: "2027-06-01", quantity: 8, basis: "reported", confidence: "high" }],
-    actionLog: [{ id: "log", createdAt: "2027-01-02T00:00:00.000Z", category: "data", note: "Validate the footprint source.", relatedEntityType: "footprintPlan", relatedEntityId: "plan", owner: "Facilities", dueDate: "2027-02-01" }],
+    actionLog: [{ id: "log", createdAt: "2027-01-02T00:00:00.000Z", category: "data", note: "Validate the footprint source.", relatedEntityType: "footprintPlan", relatedEntityId: "plan", owner: "Facilities", dueDate: "2027-02-01", status: "open" }],
   };
 }
 
@@ -44,5 +44,17 @@ describe("planning context contracts", () => {
     const parsed = capacityModelSchema.safeParse(candidate);
     expect(parsed.success).toBe(false);
     if (!parsed.success) expect(parsed.error.issues.some(issue => issue.message.includes("either productId or productFamily"))).toBe(true);
+  });
+
+  it("migrates the deprecated resolvedAt flag to complete status", () => {
+    const candidate = model() as unknown as Record<string, unknown>;
+    const actionLog = candidate.actionLog as Array<Record<string, unknown>>;
+    delete actionLog[0]!.status;
+    actionLog[0]!.resolvedAt = "2027-01-03T00:00:00.000Z";
+    const parsed = capacityModelSchema.parse(candidate);
+    expect(parsed.actionLog?.[0]?.status).toBe("complete");
+    expect(parsed.actionLog?.[0]?.resolvedAt).toBe(
+      "2027-01-03T00:00:00.000Z",
+    );
   });
 });

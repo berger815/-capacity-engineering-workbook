@@ -6,7 +6,8 @@ function spreadsheetSafeText(value: string): string {
 
 function cell(value: string | number | boolean | undefined): string {
   if (value === undefined) return "";
-  const text = typeof value === "string" ? spreadsheetSafeText(value) : String(value);
+  const text =
+    typeof value === "string" ? spreadsheetSafeText(value) : String(value);
   return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
@@ -51,8 +52,8 @@ export function exportCalendarExceptionsCsv(model: CapacityModel): string {
 
 export function exportResourceGroupsCsv(model: CapacityModel): string {
   return csv(
-    ["resourceGroupId", "resourceGroupName", "resourceKind", "capacityUnit", "calendarId", "organizationNodeId", "pooled", "tags"],
-    model.resourceGroups.map(group => [group.id, group.name, group.kind, group.capacityUnit, group.calendarId, group.organizationNodeId, group.pooled, group.tags?.join("|")]),
+    ["resourceGroupId", "resourceGroupName", "resourceKind", "capacityUnit", "calendarId", "organizationNodeId", "pooled", "indirect", "tags"],
+    model.resourceGroups.map(group => [group.id, group.name, group.kind, group.capacityUnit, group.calendarId, group.organizationNodeId, group.pooled, group.indirect ?? false, group.tags?.join("|")]),
   );
 }
 
@@ -86,12 +87,19 @@ export function exportProductsCsv(model: CapacityModel): string {
   );
 }
 
+export function exportProgramsCsv(model: CapacityModel): string {
+  return csv(
+    ["programId", "programName", "productIds", "anchorDate", "endDate", "externalKey", "tags"],
+    (model.programs ?? []).map(program => [program.id, program.name, program.productIds.join("|"), program.anchorDate, program.endDate, externalValue(program.externalKeys), program.tags?.join("|")]),
+  );
+}
+
 export function exportRoutingCsv(model: CapacityModel): string {
   const headers = [
     "productId", "revisionId", "revision", "effectiveFrom", "effectiveTo",
     "phaseId", "phaseName", "startWeeksBeforeShip", "endWeeksBeforeShip", "allocation",
     "operationId", "operationName", "operationSequence", "resourceGroupId",
-    "requirementState", "requirementValue", "setupRequirementState", "setupRequirementValue", "setupQuantity", "batchSize",
+    "requirementState", "requirementValue", "basis", "setupRequirementState", "setupRequirementValue", "setupQuantity", "batchSize",
   ];
   const rows = model.routingRevisions.flatMap(revision => revision.operations.flatMap(operation => {
     const phase = revision.phases.find(candidate => candidate.id === operation.phaseId);
@@ -116,6 +124,7 @@ export function exportRoutingCsv(model: CapacityModel): string {
         requirement.resourceGroupId,
         requirementState,
         requirementValue,
+        requirement.basis ?? "perUnit",
         setupState,
         setupValue,
         requirement.setupQuantity,

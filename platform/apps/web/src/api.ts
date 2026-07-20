@@ -1,5 +1,6 @@
 import {
   capacityModelSchema,
+  collectModelIssues,
   type CalculationResult,
   type CapacityModel,
   type ConstraintExplanation,
@@ -25,7 +26,7 @@ export interface ModelValidationResult {
     scenarios?: number;
     scenarioActions?: number;
   };
-  issues?: Array<{ path: string; message: string; code: string }>;
+  issues?: Array<{ path: string; message: string; code: string; severity?: "error" | "warning" | "info" }>;
 }
 
 export interface DemandMapping {
@@ -97,13 +98,15 @@ function localValidation(model: CapacityModel): ModelValidationResult {
       issues: validation.error.issues.map(issue => ({
         path: issue.path.map(String).join("."),
         message: issue.message,
-        code: issue.code,
+        code: issue.message.startsWith("PROGRAM_MISSING") ? "PROGRAM_MISSING" : issue.message.startsWith("PRODUCT_IN_MULTIPLE_PROGRAMS") ? "PRODUCT_IN_MULTIPLE_PROGRAMS" : issue.code,
+        severity: "error",
       })),
     };
   }
 
+  const semanticIssues = collectModelIssues(validation.data as CapacityModel);
   return {
-    valid: true,
+    valid: !semanticIssues.some(issue => issue.severity === "error"),
     modelId: validation.data.modelId,
     counts: {
       products: validation.data.products.length,
@@ -113,6 +116,7 @@ function localValidation(model: CapacityModel): ModelValidationResult {
       scenarios: validation.data.scenarios.length,
       scenarioActions: validation.data.scenarioActions?.length ?? 0,
     },
+    ...(semanticIssues.length ? { issues: semanticIssues.map(issue => ({ path: [issue.entityType, issue.entityId].filter(Boolean).join("."), message: issue.message, code: issue.code, severity: issue.severity })) } : {}),
   };
 }
 

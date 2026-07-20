@@ -1,12 +1,16 @@
 import { useState } from "react";
 import type { CapacityModel, ScenarioComparisonResult } from "@capacity/domain";
-import { buildDecisionPackage } from "@capacity/reporting";
+import {
+  buildDecisionPackage,
+  type SupplierHistoryPoint,
+} from "@capacity/reporting";
 import { generateDecisionReport } from "./api.js";
 import { renderFieldDecisionPackageHtml } from "./fieldDecisionReport.js";
 
 interface DecisionExportsProps {
   model: CapacityModel;
   comparison: ScenarioComparisonResult;
+  history?: SupplierHistoryPoint[];
 }
 
 type ExportFormat = "html" | "json";
@@ -27,7 +31,11 @@ function safeName(name: string): string {
   return name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-|-$/g, "") || "capacity-assurance";
 }
 
-export default function DecisionExports({ model, comparison }: DecisionExportsProps) {
+export default function DecisionExports({
+  model,
+  comparison,
+  history = [],
+}: DecisionExportsProps) {
   const [busy, setBusy] = useState<ExportFormat | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +44,12 @@ export default function DecisionExports({ model, comparison }: DecisionExportsPr
     setError(null);
     try {
       if (format === "html") {
-        const decisionPackage = buildDecisionPackage(model, comparison);
+        const decisionPackage = buildDecisionPackage(
+          model,
+          comparison,
+          new Date().toISOString(),
+          history,
+        );
         saveFile(`${safeName(model.name)}-supplier-capacity-finding.html`, "text/html;charset=utf-8", renderFieldDecisionPackageHtml(decisionPackage));
       } else {
         const report = await generateDecisionReport(

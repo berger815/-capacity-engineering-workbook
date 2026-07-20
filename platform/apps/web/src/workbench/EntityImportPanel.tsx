@@ -211,11 +211,11 @@ function ConfiguredImportPanel({ entity, inputEntity, profile, exporter, model, 
     {error ? <div className="error-panel"><strong>Input issue</strong><span>{error}</span></div> : null}
 
     <div className="drawer-section">
-      <div className="card-title-row"><h4>Source file</h4><label className="file-button compact">Choose CSV or Excel<input type="file" accept=".csv,.xlsx,.xls,.xlsm,.xlsb,text/csv" onChange={event => void readFile(event.target.files?.[0])} /></label></div>
+      <div className="card-title-row"><h4>Source file</h4><label className="file-button compact">Choose CSV or Excel<input type="file" accept=".csv,.xlsx,.xlsm,text/csv" onChange={event => void readFile(event.target.files?.[0])} /></label></div>
       {workbook && workbook.sheetNames.length > 1 ? <label>Worksheet<select value={selectedSheet} onChange={event => { const sheet = event.target.value; setSelectedSheet(sheet); setCsv(workbook.csvBySheet[sheet] ?? ""); setPreview(null); }}>{workbook.sheetNames.map(sheet => <option key={sheet} value={sheet}>{sheet}</option>)}</select></label> : null}
       <textarea value={csv} onChange={event => { setCsv(event.target.value); setPreview(null); }} aria-label={`${definition.label} CSV content`} spellCheck={false} />
       <small>{busy === "reading" ? "Reading workbook…" : "Excel is converted to CSV in the browser before reconciliation."}</small>
-      {entity === "calendars" ? <div className="exception-input"><div className="card-title-row"><h4>Optional exceptions</h4><label className="file-button compact">Choose file<input type="file" accept=".csv,.xlsx,.xls,.xlsm,.xlsb,text/csv" onChange={event => void readExceptionsFile(event.target.files?.[0])} /></label></div><textarea value={exceptionsCsv} onChange={event => { setExceptionsCsv(event.target.value); setPreview(null); }} aria-label="Calendar exceptions CSV" spellCheck={false} /></div> : null}
+      {entity === "calendars" ? <div className="exception-input"><div className="card-title-row"><h4>Optional exceptions</h4><label className="file-button compact">Choose file<input type="file" accept=".csv,.xlsx,.xlsm,text/csv" onChange={event => void readExceptionsFile(event.target.files?.[0])} /></label></div><textarea value={exceptionsCsv} onChange={event => { setExceptionsCsv(event.target.value); setPreview(null); }} aria-label="Calendar exceptions CSV" spellCheck={false} /></div> : null}
     </div>
 
     <div className="drawer-section">

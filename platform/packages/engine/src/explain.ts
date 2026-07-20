@@ -83,9 +83,13 @@ function adjustedDemandQuantity(demand: DemandRecord, actions: ScenarioAction[])
 }
 
 function revisionForDemand(revisions: RoutingRevision[], demand: DemandRecord): RoutingRevision | undefined {
+  return revisionForProductAt(revisions, demand.productId, demand.shipDate);
+}
+
+function revisionForProductAt(revisions: RoutingRevision[], productId: string, date: string): RoutingRevision | undefined {
   return revisions
-    .filter(revision => revision.productId === demand.productId)
-    .filter(revision => revision.effectiveFrom <= demand.shipDate && (!revision.effectiveTo || revision.effectiveTo >= demand.shipDate))
+    .filter(revision => revision.productId === productId)
+    .filter(revision => revision.effectiveFrom <= date && (!revision.effectiveTo || revision.effectiveTo >= date))
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
 }
 
@@ -178,6 +182,7 @@ export function explainConstraint(
       if (allocation === 0) continue;
 
       for (const requirement of operation.requirements.filter(item => item.resourceGroupId === resourceGroupId)) {
+        if ((requirement.basis ?? "perUnit") !== "perUnit") continue;
         const value = requirement.requirement;
         if (value.state !== "value" || value.value === undefined) continue;
 
@@ -202,6 +207,7 @@ export function explainConstraint(
           operationId: operation.id,
           operationName: operation.name,
           requirementId: requirement.id,
+          basis: "perUnit",
           phaseId: phase.id,
           phaseName: phase.name,
           shipDate: demand.shipDate,
@@ -213,6 +219,52 @@ export function explainConstraint(
           runLoad,
           totalLoad,
         });
+      }
+    }
+  }
+
+  for (const program of model.programs ?? []) {
+    for (const productId of program.productIds) {
+      const revision = revisionForProductAt(model.routingRevisions, productId, program.anchorDate);
+      if (!revision) continue;
+      const phases = new Map(revision.phases.map(phase => [phase.id, phase]));
+      for (const operation of revision.operations) {
+        const phase = phases.get(operation.phaseId);
+        if (!phase) continue;
+        for (const requirement of operation.requirements.filter(item => item.resourceGroupId === resourceGroupId)) {
+          const basis = requirement.basis ?? "perUnit";
+          const value = requirement.requirement;
+          if (basis === "perUnit" || value.state !== "value" || value.value === undefined) continue;
+          const allocation = basis === "perProgram"
+            ? phaseAllocation(phase, program.anchorDate, start, end)
+            : overlapDays(parseDate(program.anchorDate), parseDate(program.endDate ?? model.horizonEnd), start, end) > 0 ? 1 : 0;
+          const totalLoad = value.value * allocation;
+          if (totalLoad === 0) continue;
+          contributions.push({
+            scenarioId,
+            resourceGroupId,
+            periodStart: result.periodStart,
+            periodEnd: result.periodEnd,
+            demandId: `program:${program.id}`,
+            productId,
+            routingRevisionId: revision.id,
+            operationId: operation.id,
+            operationName: operation.name,
+            requirementId: requirement.id,
+            basis,
+            programId: program.id,
+            phaseId: phase.id,
+            phaseName: phase.name,
+            shipDate: program.anchorDate,
+            originalDemandQuantity: 1,
+            adjustedDemandQuantity: 1,
+            phaseAllocation: allocation,
+            unitRequirement: value.value,
+            setupLoad: 0,
+            runLoad: totalLoad,
+            totalLoad,
+          });
+        }
       }
     }
   }

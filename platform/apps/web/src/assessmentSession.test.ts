@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { capacityModelSchema } from "@capacity/domain";
-import { createNewAssessment, parseAssessmentFile, serializeAssessmentSession } from "./assessmentSession.js";
+import {
+  createFollowUpAssessment,
+  createNewAssessment,
+  parseAssessmentFile,
+  serializeAssessmentSession,
+  type StoredAssessment,
+} from "./assessmentSession.js";
 
 const model = createNewAssessment({
   name: "Supplier A Capacity Assessment",
+  supplierId: "SUP-A",
+  supplierName: "Supplier A",
+  assessmentDate: "2026-07-20",
   horizonStart: "2026-01-01",
   horizonEnd: "2027-12-31",
   planningGranularity: "month",
@@ -15,6 +24,68 @@ describe("local assessment lifecycle", () => {
     expect(model.metadata).toMatchObject({ assessmentMode: "local", starterTemplate: true });
     expect(model.organization).toHaveLength(1);
     expect(model.calendars).toHaveLength(1);
+    expect(model.supplier?.supplierId).toBe("SUP-A");
+  });
+
+  it("carries unverified actions forward with their original assessment", () => {
+    const priorModel = {
+      ...model,
+      actionLog: [
+        {
+          id: "open-action",
+          createdAt: "2025-08-01T00:00:00.000Z",
+          category: "followUp" as const,
+          note: "Provide evidence",
+          status: "complete" as const,
+        },
+        {
+          id: "verified-action",
+          createdAt: "2025-08-01T00:00:00.000Z",
+          category: "followUp" as const,
+          note: "Already checked",
+          status: "verified" as const,
+          verifiedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    };
+    const prior = {
+      assessmentId: "assessment-prior",
+      supplierId: "SUP-A",
+      supplierName: "Supplier A",
+      assessmentDate: "2025-08-01",
+      savedAt: "2025-08-01T12:00:00.000Z",
+      openActionCount: 1,
+      session: {
+        sessionSchemaVersion: "1.0.0" as const,
+        savedAt: "2025-08-01T12:00:00.000Z",
+        origin: "new" as const,
+        activeStep: "decision",
+        experience: "guided" as const,
+        model: priorModel,
+        calculation: null,
+        comparison: null,
+      },
+    } satisfies StoredAssessment;
+    const followUp = createFollowUpAssessment(
+      {
+        name: "June follow-up",
+        supplierId: "SUP-A",
+        supplierName: "Supplier A",
+        assessmentDate: "2026-06-01",
+        horizonStart: "2026-06-01",
+        horizonEnd: "2027-06-01",
+        planningGranularity: "month",
+      },
+      prior,
+      { carryActions: true, reuseModel: true },
+    );
+    expect(followUp.actionLog).toHaveLength(1);
+    expect(followUp.actionLog?.[0]).toMatchObject({
+      id: "open-action",
+      createdAt: "2025-08-01T00:00:00.000Z",
+      raisedInAssessmentId: "assessment-prior",
+      supplierId: "SUP-A",
+    });
   });
 
   it("round-trips a working assessment file", () => {
