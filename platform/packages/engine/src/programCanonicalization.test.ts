@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { capacityModelSchema, collectModelIssues, type CapacityModel } from "@capacity/domain";
+import { explainConstraint } from "./explain.js";
 import { calculateCapacity } from "./index.js";
 
 function bulkProgramModel(memberCount = 100, conflicting = false): CapacityModel {
@@ -97,6 +98,23 @@ describe("program requirement canonicalization", () => {
     const calculation = calculateCapacity(model, "baseline");
     expect(calculation.issues.filter(issue => issue.severity === "error")).toEqual([]);
     expect(calculation.results.reduce((sum, row) => sum + row.load, 0)).toBeCloseTo(290, 10);
+  });
+
+  it("reconciles the canonical program load through constraint explanation", () => {
+    const model = bulkProgramModel();
+    const calculation = calculateCapacity(model, "baseline");
+    const loaded = calculation.results.find(row => row.load > 0);
+    expect(loaded).toBeDefined();
+    const explanation = explainConstraint(model, "baseline", "engineering", loaded!.periodStart);
+    expect(explanation.contributions).toHaveLength(1);
+    expect(explanation.contributions[0]).toMatchObject({
+      demandId: "program:bulk-launch",
+      programId: "bulk-launch",
+      requirementId: "shared-program-engineering",
+      basis: "perProgram",
+    });
+    expect(explanation.totalExplainedLoad).toBeCloseTo(loaded!.load, 10);
+    expect(explanation.unexplainedLoad).toBeCloseTo(0, 10);
   });
 
   it("rejects conflicting definitions that reuse a program requirement id", () => {
