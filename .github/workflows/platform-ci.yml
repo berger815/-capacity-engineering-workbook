@@ -59,10 +59,16 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
       - name: Test
-        run: pnpm test
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test 2>&1 | tee /tmp/test-output.log
       - name: Upload golden diagnostic
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: golden-diagnostic
-          path: /tmp/golden-diagnostic.json
-          if-no-files-found: error
+          path: |
+            /tmp/golden-diagnostic.json
+            /tmp/test-output.log
+          if-no-files-found: warn
