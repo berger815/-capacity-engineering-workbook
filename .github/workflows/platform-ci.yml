@@ -60,3 +60,9 @@ jobs:
         run: pnpm typecheck
       - name: Test
         run: pnpm test
+      - name: Upload golden diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-diagnostic
+          path: /tmp/golden-diagnostic.json
+          if-no-files-found: error
