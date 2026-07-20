@@ -10,6 +10,14 @@ import {
 import { createCapacityApiServer, routeApiRequest } from "./appV2.js";
 
 const openServers: Server[] = [];
+const appliedRecoveryActions = [
+  "action-weld-cross-train",
+  "action-heat-overflow",
+  "action-add-positioners",
+  "action-weld-hiring",
+  "action-add-assembly",
+  "action-add-test-stand",
+];
 
 const demandMapping = {
   productColumn: "product_id",
@@ -35,7 +43,7 @@ describe("Capacity Assurance API", () => {
     expect(response.body).toMatchObject({
       valid: true,
       modelId: "northstar-v2",
-      counts: { products: 4, resourceGroups: 12, routingRevisions: 4, demandRecords: 48, scenarios: 2, scenarioActions: 3 },
+      counts: { products: 4, resourceGroups: 12, routingRevisions: 4, demandRecords: 144, scenarios: 2, scenarioActions: 6 },
     });
   });
 
@@ -169,9 +177,9 @@ describe("Capacity Assurance API", () => {
     });
     expect(response.statusCode).toBe(200);
     const comparison = response.body as { appliedActionIds: string[]; rows: Array<{ resourceGroupId: string; periodStart: string; capacityDelta: number; loadDelta: number }>; comparison: { demandSourceScenarioId: string } };
-    expect(comparison.appliedActionIds).toHaveLength(3);
+    expect(comparison.appliedActionIds).toEqual(appliedRecoveryActions);
     expect(comparison.comparison.demandSourceScenarioId).toBe("baseline");
-    expect(comparison.rows.some(row => row.resourceGroupId === "rg-oven" && row.periodStart === "2027-07-01" && row.capacityDelta > 0)).toBe(true);
+    expect(comparison.rows.some(row => row.resourceGroupId === "rg-oven" && row.periodStart === "2027-08-01" && row.capacityDelta > 0)).toBe(true);
     expect(comparison.rows.every(row => row.loadDelta === 0)).toBe(true);
   });
 
@@ -192,9 +200,10 @@ describe("Capacity Assurance API", () => {
       format: "json",
     });
     expect(json.statusCode).toBe(200);
-    const portable = JSON.parse((json.body as { content: string }).content) as { assessmentSnapshot: { model: { products: unknown[] }; comparison: { appliedActionIds: string[] } } };
+    const portable = JSON.parse((json.body as { content: string }).content) as { assessmentSnapshot: { model: { products: unknown[]; demand: unknown[] }; comparison: { appliedActionIds: string[] } } };
     expect(portable.assessmentSnapshot.model.products).toHaveLength(4);
-    expect(portable.assessmentSnapshot.comparison.appliedActionIds).toHaveLength(3);
+    expect(portable.assessmentSnapshot.model.demand).toHaveLength(144);
+    expect(portable.assessmentSnapshot.comparison.appliedActionIds).toEqual(appliedRecoveryActions);
   });
 
   it("rejects invalid models before calculation", () => {
@@ -220,6 +229,6 @@ describe("Capacity Assurance API", () => {
     const body = await response.json() as { modelId: string; rows: unknown[]; appliedActionIds: string[] };
     expect(body.modelId).toBe("northstar-v2");
     expect(body.rows.length).toBeGreaterThan(0);
-    expect(body.appliedActionIds).toHaveLength(3);
+    expect(body.appliedActionIds).toEqual(appliedRecoveryActions);
   });
 });
