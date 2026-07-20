@@ -8,6 +8,8 @@ import {
   setRecoveryActionIncluded,
 } from "./recovery.js";
 
+const governedActionId = "action-heat-overflow";
+
 describe("recovery plan helpers", () => {
   it("finds the baseline and recovery scenarios without changing them", () => {
     expect(findBaselineScenarioId(northstarRecoveryModel)).toBe("baseline");
@@ -35,17 +37,17 @@ describe("recovery plan helpers", () => {
   });
 
   it("rejects actions explicitly instead of deleting their history", () => {
-    const next = rejectRecoveryAction(northstarRecoveryModel, "action-add-oven");
-    expect(next.scenarioActions?.find(item => item.id === "action-add-oven")).toMatchObject({
+    const next = rejectRecoveryAction(northstarRecoveryModel, governedActionId);
+    expect(next.scenarioActions?.find(item => item.id === governedActionId)).toMatchObject({
       included: false,
       status: "rejected",
     });
   });
 
   it("can reinclude a rejected action by returning it to proposed status", () => {
-    const rejected = rejectRecoveryAction(northstarRecoveryModel, "action-add-oven");
-    const restored = setRecoveryActionIncluded(rejected, "action-add-oven", true);
-    expect(restored.scenarioActions?.find(item => item.id === "action-add-oven")).toMatchObject({
+    const rejected = rejectRecoveryAction(northstarRecoveryModel, governedActionId);
+    const restored = setRecoveryActionIncluded(rejected, governedActionId, true);
+    expect(restored.scenarioActions?.find(item => item.id === governedActionId)).toMatchObject({
       included: true,
       status: "proposed",
     });
