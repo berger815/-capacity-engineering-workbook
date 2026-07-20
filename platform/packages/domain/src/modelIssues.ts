@@ -1,4 +1,5 @@
 import type { CapacityModel, ModelIssue } from "./model.js";
+import { canonicalProgramRequirements } from "./programRequirements.js";
 
 /** Semantic model checks shared by readiness and calculation. */
 export function collectModelIssues(model: CapacityModel): ModelIssue[] {
@@ -47,6 +48,17 @@ export function collectModelIssues(model: CapacityModel): ModelIssue[] {
   }
 
   for (const program of model.programs ?? []) {
+    const canonical = canonicalProgramRequirements(model, program);
+    for (const conflict of canonical.conflicts) {
+      issues.push({
+        severity: "error",
+        code: "PROGRAM_REQUIREMENT_CONFLICT",
+        message: `Program ${program.name} repeats requirement ${conflict.requirementId} with conflicting definitions on products ${conflict.firstProductId} and ${conflict.conflictingProductId}`,
+        entityType: "routingRequirement",
+        entityId: conflict.requirementId,
+      });
+    }
+
     if (!program.productIds.some(productId => programRequirementProducts.has(productId))) continue;
     if (program.anchorDate < model.horizonStart) {
       issues.push({
