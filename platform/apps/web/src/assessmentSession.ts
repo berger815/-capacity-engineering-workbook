@@ -19,9 +19,22 @@ export interface OpenedAssessment {
   comparison: ScenarioComparisonResult | null;
 }
 
+export interface StoredAssessment {
+  assessmentId: string;
+  supplierId: string;
+  supplierName: string;
+  assessmentDate: string;
+  savedAt: string;
+  decisionState?: "supported" | "atRisk" | "notSupported" | "incomplete";
+  governingConstraint?: string;
+  openActionCount: number;
+  session: AssessmentSession;
+}
+
 const DATABASE_NAME = "capacity-assurance-local";
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const STORE_NAME = "assessment-sessions";
+const LIBRARY_STORE_NAME = "assessments";
 const ACTIVE_KEY = "active";
 const FALLBACK_KEY = "capacity-assurance-active-session";
 
@@ -39,10 +52,67 @@ function openDatabase(): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const database = request.result;
       if (!database.objectStoreNames.contains(STORE_NAME)) database.createObjectStore(STORE_NAME);
+      if (!database.objectStoreNames.contains(LIBRARY_STORE_NAME)) {
+        const store = database.createObjectStore(LIBRARY_STORE_NAME, { keyPath: "assessmentId" });
+        store.createIndex("supplierId", "supplierId", { unique: false });
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error("Unable to open local assessment storage"));
   });
+}
+
+function decisionState(session: AssessmentSession): StoredAssessment["decisionState"] {
+  const result = session.comparison?.comparison ?? session.calculation;
+  if (!result || result.issues.some(issue => issue.severity === "error") || !result.governingConstraint) return "incomplete";
+  const utilization = result.governingConstraint.utilization;
+  if (utilization === null) return "incomplete";
+  if (!Number.isFinite(utilization) || utilization > 1) return "notSupported";
+  return utilization >= 0.85 ? "atRisk" : "supported";
+}
+
+export async function saveAssessmentToLibrary(session: AssessmentSession): Promise<StoredAssessment> {
+  const supplier = session.model.supplier;
+  const assessmentDate = session.model.assessmentDate;
+  if (!supplier || !assessmentDate) throw new Error("Supplier identity and assessment date are required before saving to the library");
+  const governing = (session.comparison?.comparison ?? session.calculation)?.governingConstraint;
+  const stored: StoredAssessment = {
+    assessmentId: session.model.modelId,
+    supplierId: supplier.supplierId,
+    supplierName: supplier.supplierName,
+    assessmentDate,
+    savedAt: new Date().toISOString(),
+    decisionState: decisionState(session),
+    ...(governing ? { governingConstraint: session.model.resourceGroups.find(group => group.id === governing.resourceGroupId)?.name ?? governing.resourceGroupId } : {}),
+    openActionCount: (session.model.actionLog ?? []).filter(action => !["verified", "cancelled"].includes(action.status)).length,
+    session: copy({ ...session, savedAt: new Date().toISOString() }),
+  };
+  const database = await openDatabase();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(LIBRARY_STORE_NAME, "readwrite");
+    transaction.objectStore(LIBRARY_STORE_NAME).put(stored);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error ?? new Error("Unable to save assessment to the local library"));
+    transaction.onabort = () => reject(transaction.error ?? new Error("Assessment library save was aborted"));
+  });
+  database.close();
+  return stored;
+}
+
+export async function listStoredAssessments(): Promise<StoredAssessment[]> {
+  try {
+    const database = await openDatabase();
+    const records = await new Promise<StoredAssessment[]>((resolve, reject) => {
+      const transaction = database.transaction(LIBRARY_STORE_NAME, "readonly");
+      const request = transaction.objectStore(LIBRARY_STORE_NAME).getAll();
+      request.onsuccess = () => resolve((request.result as StoredAssessment[]).map(copy));
+      request.onerror = () => reject(request.error ?? new Error("Unable to read the assessment library"));
+    });
+    database.close();
+    return records.sort((a, b) => b.assessmentDate.localeCompare(a.assessmentDate) || b.savedAt.localeCompare(a.savedAt));
+  } catch {
+    return [];
+  }
 }
 
 function writeFallback(session: AssessmentSession): void {
@@ -170,6 +240,10 @@ export function parseAssessmentFile(content: string): OpenedAssessment {
 
 export function createNewAssessment(input: {
   name: string;
+  supplierId: string;
+  supplierName: string;
+  site?: string;
+  assessmentDate: string;
   horizonStart: string;
   horizonEnd: string;
   planningGranularity: "week" | "month";
@@ -184,6 +258,8 @@ export function createNewAssessment(input: {
     schemaVersion: "1.0.0",
     modelId: `assessment-${stamp}`,
     name: input.name.trim() || "Untitled Supplier Capacity Assessment",
+    supplier: { supplierId: input.supplierId.trim(), supplierName: input.supplierName.trim(), ...(input.site?.trim() ? { site: input.site.trim() } : {}) },
+    assessmentDate: input.assessmentDate,
     planningGranularity: input.planningGranularity,
     horizonStart: input.horizonStart,
     horizonEnd: input.horizonEnd,
@@ -224,6 +300,43 @@ export function createNewAssessment(input: {
       createdAt,
       starterTemplate: true,
       category: "supplier capacity assessment",
+    },
+  };
+}
+
+export function createFollowUpAssessment(
+  input: Parameters<typeof createNewAssessment>[0],
+  prior: StoredAssessment,
+  options: { carryActions: boolean; reuseModel: boolean },
+): CapacityModel {
+  const fresh = createNewAssessment(input);
+  const source = options.reuseModel ? copy(prior.session.model) : fresh;
+  const carriedActions = options.carryActions
+    ? (prior.session.model.actionLog ?? [])
+        .filter(action => !["verified", "cancelled"].includes(action.status))
+        .map(action => ({
+          ...copy(action),
+          raisedInAssessmentId: action.raisedInAssessmentId ?? prior.assessmentId,
+          supplierId: action.supplierId ?? prior.supplierId,
+        }))
+    : [];
+  return {
+    ...source,
+    modelId: fresh.modelId,
+    name: fresh.name,
+    supplier: fresh.supplier,
+    assessmentDate: fresh.assessmentDate,
+    planningGranularity: fresh.planningGranularity,
+    horizonStart: fresh.horizonStart,
+    horizonEnd: fresh.horizonEnd,
+    actionLog: carriedActions,
+    metadata: {
+      ...(source.metadata ?? {}),
+      assessmentMode: "local",
+      createdAt: new Date().toISOString(),
+      priorAssessmentId: prior.assessmentId,
+      priorAssessmentDate: prior.assessmentDate,
+      reassessmentFromPriorModel: options.reuseModel,
     },
   };
 }

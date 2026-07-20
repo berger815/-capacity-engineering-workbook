@@ -1,12 +1,17 @@
 import type {
   CalculationResult,
   CapacityModel,
+  ActionLogEntry,
   ResourcePeriodResult,
   ScenarioAction,
   ScenarioComparisonResult,
 } from "@capacity/domain";
 
-export type DecisionClassification = "supportable" | "conditional" | "notSupportable" | "incomplete";
+export type DecisionClassification =
+  | "supportable"
+  | "conditional"
+  | "notSupportable"
+  | "incomplete";
 
 export interface DecisionPackageRisk {
   resourceGroupId: string;
@@ -17,6 +22,17 @@ export interface DecisionPackageRisk {
   capacity: number;
   gap: number;
   utilization: number | null;
+  indirect: boolean;
+}
+
+export interface SupplierHistoryPoint {
+  assessmentId: string;
+  assessmentDate: string;
+  decisionState: "supported" | "atRisk" | "notSupported" | "incomplete";
+}
+
+export interface DecisionPackageOpenAction extends ActionLogEntry {
+  ageDays: number;
 }
 
 export interface DecisionPackageAction {
@@ -46,6 +62,8 @@ export interface DecisionPackage {
     planningGranularity: string;
     horizonStart: string;
     horizonEnd: string;
+    supplier?: CapacityModel["supplier"];
+    assessmentDate?: string;
   };
   decision: {
     classification: DecisionClassification;
@@ -58,9 +76,16 @@ export interface DecisionPackage {
     remainingGapPeriods: number;
     worsenedGapPeriods: number;
   };
-  assumptions: Array<{ scenarioId: string; key: string; value: string | number | boolean }>;
+  assumptions: Array<{
+    scenarioId: string;
+    key: string;
+    value: string | number | boolean;
+  }>;
   actions: DecisionPackageAction[];
   topRemainingRisks: DecisionPackageRisk[];
+  openActions: DecisionPackageOpenAction[];
+  verification: ActionLogEntry[];
+  supplierHistory: SupplierHistoryPoint[];
   issues: CalculationResult["issues"];
   lineage: {
     demandSourceScenarioId?: string;
@@ -79,7 +104,11 @@ function utilizationScore(value: number | null): number {
 }
 
 function classify(result: CalculationResult): DecisionClassification {
-  if (result.issues.some(issue => issue.severity === "error") || !result.governingConstraint) return "incomplete";
+  if (
+    result.issues.some((issue) => issue.severity === "error") ||
+    !result.governingConstraint
+  )
+    return "incomplete";
   const utilization = result.governingConstraint.utilization;
   if (utilization === null) return "incomplete";
   if (!Number.isFinite(utilization) || utilization > 1) return "notSupportable";
@@ -87,39 +116,62 @@ function classify(result: CalculationResult): DecisionClassification {
   return "supportable";
 }
 
-function risk(model: CapacityModel, row: ResourcePeriodResult | null): DecisionPackageRisk | null {
+function risk(
+  model: CapacityModel,
+  row: ResourcePeriodResult | null,
+): DecisionPackageRisk | null {
   if (!row) return null;
   return {
     resourceGroupId: row.resourceGroupId,
-    resourceName: model.resourceGroups.find(group => group.id === row.resourceGroupId)?.name ?? row.resourceGroupId,
+    resourceName:
+      model.resourceGroups.find((group) => group.id === row.resourceGroupId)
+        ?.name ?? row.resourceGroupId,
     periodStart: row.periodStart,
     periodEnd: row.periodEnd,
     load: row.load,
     capacity: row.capacity,
     gap: row.gap,
     utilization: row.utilization,
+    indirect:
+      model.resourceGroups.find((group) => group.id === row.resourceGroupId)
+        ?.indirect ?? false,
   };
 }
 
 function actionTarget(model: CapacityModel, action: ScenarioAction): string {
   if (action.kind === "resourceQuantityDelta") {
-    return model.resources.find(resource => resource.id === action.resourceId)?.name ?? action.resourceId;
+    return (
+      model.resources.find((resource) => resource.id === action.resourceId)
+        ?.name ?? action.resourceId
+    );
   }
   if (action.kind === "resourceCapacityMultiplier") {
-    return model.resourceGroups.find(group => group.id === action.resourceGroupId)?.name ?? action.resourceGroupId;
+    return (
+      model.resourceGroups.find((group) => group.id === action.resourceGroupId)
+        ?.name ?? action.resourceGroupId
+    );
   }
   if (!action.productId) return "All demand";
-  return model.products.find(product => product.id === action.productId)?.name ?? action.productId;
+  return (
+    model.products.find((product) => product.id === action.productId)?.name ??
+    action.productId
+  );
 }
 
 function actionEffect(action: ScenarioAction): string {
-  if (action.kind === "resourceQuantityDelta") return `Add ${action.quantityDelta} resource equivalent`;
-  if (action.kind === "resourceCapacityMultiplier") return `${Math.round((action.multiplier - 1) * 100)}% effective capacity change`;
+  if (action.kind === "resourceQuantityDelta")
+    return `Add ${action.quantityDelta} resource equivalent`;
+  if (action.kind === "resourceCapacityMultiplier")
+    return `${Math.round((action.multiplier - 1) * 100)}% effective capacity change`;
   return `${Math.round((action.multiplier - 1) * 100)}% demand change`;
 }
 
-function decisionStatement(classification: DecisionClassification, governing: DecisionPackageRisk | null): string {
-  if (classification === "incomplete") return "The capacity commitment is not yet defensible because the model or governing result is incomplete.";
+function decisionStatement(
+  classification: DecisionClassification,
+  governing: DecisionPackageRisk | null,
+): string {
+  if (classification === "incomplete")
+    return "The capacity commitment is not yet defensible because the model or governing result is incomplete.";
   if (!governing) return "No governing constraint was established.";
   if (classification === "notSupportable") {
     return `${governing.resourceName} remains below required capacity in ${governing.periodStart}; the modeled recovery does not yet support the commitment.`;
@@ -134,14 +186,21 @@ export function buildDecisionPackage(
   model: CapacityModel,
   comparison: ScenarioComparisonResult,
   generatedAt = new Date().toISOString(),
+  supplierHistory: SupplierHistoryPoint[] = [],
 ): DecisionPackage {
   const classification = classify(comparison.comparison);
-  const baselineGoverningConstraint = risk(model, comparison.baseline.governingConstraint);
-  const recoveryGoverningConstraint = risk(model, comparison.comparison.governingConstraint);
+  const baselineGoverningConstraint = risk(
+    model,
+    comparison.baseline.governingConstraint,
+  );
+  const recoveryGoverningConstraint = risk(
+    model,
+    comparison.comparison.governingConstraint,
+  );
   const applied = new Set(comparison.appliedActionIds);
   const actions = (model.scenarioActions ?? [])
-    .filter(action => action.scenarioId === comparison.comparisonScenarioId)
-    .map(action => ({
+    .filter((action) => action.scenarioId === comparison.comparisonScenarioId)
+    .map((action) => ({
       id: action.id,
       name: action.name,
       kind: action.kind,
@@ -157,15 +216,43 @@ export function buildDecisionPackage(
     }));
 
   const assumptions = model.scenarios
-    .filter(scenario => scenario.id === comparison.baselineScenarioId || scenario.id === comparison.comparisonScenarioId)
-    .flatMap(scenario => Object.entries(scenario.assumptions ?? {}).map(([key, value]) => ({ scenarioId: scenario.id, key, value })));
+    .filter(
+      (scenario) =>
+        scenario.id === comparison.baselineScenarioId ||
+        scenario.id === comparison.comparisonScenarioId,
+    )
+    .flatMap((scenario) =>
+      Object.entries(scenario.assumptions ?? {}).map(([key, value]) => ({
+        scenarioId: scenario.id,
+        key,
+        value,
+      })),
+    );
 
   const topRemainingRisks = [...comparison.comparison.results]
-    .filter(row => row.load > 0)
-    .sort((a, b) => utilizationScore(b.utilization) - utilizationScore(a.utilization))
+    .filter((row) => row.load > 0)
+    .sort(
+      (a, b) =>
+        utilizationScore(b.utilization) - utilizationScore(a.utilization),
+    )
     .slice(0, 10)
-    .map(row => risk(model, row)!)
+    .map((row) => risk(model, row)!)
     .filter(Boolean);
+  const generatedTime = new Date(generatedAt).getTime();
+  const openActions = (model.actionLog ?? [])
+    .filter((action) => !["verified", "cancelled"].includes(action.status))
+    .map((action) => ({
+      ...action,
+      ageDays: Math.max(
+        0,
+        Math.floor(
+          (generatedTime - new Date(action.createdAt).getTime()) / 86_400_000,
+        ),
+      ),
+    }));
+  const verification = (model.actionLog ?? []).filter(
+    (action) => action.status === "verified",
+  );
 
   return {
     packageSchemaVersion: "1.0.0",
@@ -179,6 +266,10 @@ export function buildDecisionPackage(
       planningGranularity: model.planningGranularity,
       horizonStart: model.horizonStart,
       horizonEnd: model.horizonEnd,
+      ...(model.supplier ? { supplier: model.supplier } : {}),
+      ...(model.assessmentDate
+        ? { assessmentDate: model.assessmentDate }
+        : {}),
     },
     decision: {
       classification,
@@ -194,9 +285,17 @@ export function buildDecisionPackage(
     assumptions,
     actions,
     topRemainingRisks,
+    openActions,
+    verification,
+    supplierHistory,
     issues: comparison.comparison.issues,
     lineage: {
-      ...(comparison.comparison.demandSourceScenarioId ? { demandSourceScenarioId: comparison.comparison.demandSourceScenarioId } : {}),
+      ...(comparison.comparison.demandSourceScenarioId
+        ? {
+            demandSourceScenarioId:
+              comparison.comparison.demandSourceScenarioId,
+          }
+        : {}),
       appliedActionIds: comparison.appliedActionIds,
       ...(model.metadata ? { modelMetadata: model.metadata } : {}),
     },
@@ -204,7 +303,9 @@ export function buildDecisionPackage(
   };
 }
 
-export function serializeDecisionPackage(decisionPackage: DecisionPackage): string {
+export function serializeDecisionPackage(
+  decisionPackage: DecisionPackage,
+): string {
   return JSON.stringify(decisionPackage, null, 2);
 }
 
@@ -223,11 +324,28 @@ function percent(value: number | null): string {
   return `${Math.round(value * 100)}%`;
 }
 
-export function renderDecisionPackageHtml(decisionPackage: DecisionPackage): string {
+export function renderDecisionPackageHtml(
+  decisionPackage: DecisionPackage,
+): string {
   const decision = decisionPackage.decision;
-  const actionRows = decisionPackage.actions.map(action => `<tr><td>${escapeHtml(action.name)}</td><td>${escapeHtml(action.target)}</td><td>${escapeHtml(action.effect)}</td><td>${escapeHtml(action.effectiveFrom)}${action.effectiveTo ? ` → ${escapeHtml(action.effectiveTo)}` : " onward"}</td><td>${escapeHtml(action.status)}</td><td>${action.included ? "Included" : "Not included"}</td></tr>`).join("");
-  const riskRows = decisionPackage.topRemainingRisks.map(item => `<tr><td>${escapeHtml(item.resourceName)}</td><td>${escapeHtml(item.periodStart)}</td><td class="num">${item.load.toFixed(1)}</td><td class="num">${item.capacity.toFixed(1)}</td><td class="num ${item.gap < 0 ? "bad" : ""}">${item.gap.toFixed(1)}</td><td class="num">${escapeHtml(percent(item.utilization))}</td></tr>`).join("");
-  const assumptionRows = decisionPackage.assumptions.map(item => `<tr><td>${escapeHtml(item.scenarioId)}</td><td>${escapeHtml(item.key)}</td><td>${escapeHtml(item.value)}</td></tr>`).join("");
+  const actionRows = decisionPackage.actions
+    .map(
+      (action) =>
+        `<tr><td>${escapeHtml(action.name)}</td><td>${escapeHtml(action.target)}</td><td>${escapeHtml(action.effect)}</td><td>${escapeHtml(action.effectiveFrom)}${action.effectiveTo ? ` → ${escapeHtml(action.effectiveTo)}` : " onward"}</td><td>${escapeHtml(action.status)}</td><td>${action.included ? "Included" : "Not included"}</td></tr>`,
+    )
+    .join("");
+  const riskRows = decisionPackage.topRemainingRisks
+    .map(
+      (item) =>
+        `<tr><td>${escapeHtml(item.resourceName)}</td><td>${escapeHtml(item.periodStart)}</td><td class="num">${item.load.toFixed(1)}</td><td class="num">${item.capacity.toFixed(1)}</td><td class="num ${item.gap < 0 ? "bad" : ""}">${item.gap.toFixed(1)}</td><td class="num">${escapeHtml(percent(item.utilization))}</td></tr>`,
+    )
+    .join("");
+  const assumptionRows = decisionPackage.assumptions
+    .map(
+      (item) =>
+        `<tr><td>${escapeHtml(item.scenarioId)}</td><td>${escapeHtml(item.key)}</td><td>${escapeHtml(item.value)}</td></tr>`,
+    )
+    .join("");
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(decisionPackage.title)}</title><style>

@@ -4,11 +4,13 @@ import {
   genericCalendarExceptionProfile,
   genericCalendarProfile,
   genericProductProfile,
+  genericProgramProfile,
   genericResourceGroupProfile,
   genericResourceProfile,
   genericRoutingProfile,
   importCalendarsCsv,
   importProductsCsv,
+  importProgramsCsv,
   importResourceGroupsCsv,
   importResourcesCsv,
   importRoutingCsv,
@@ -106,11 +108,12 @@ describe("calendar import", () => {
 describe("resource group and resource import", () => {
   it("loads explicit resource groups before resources", () => {
     const groupCsv = [
-      "resourceGroupId,resourceGroupName,resourceKind,capacityUnit,calendarId,organizationNodeId,pooled,tags",
-      "rg-oven,Ovens,equipment,hours,cal-base,site,true,heat|critical",
+      "resourceGroupId,resourceGroupName,resourceKind,capacityUnit,calendarId,organizationNodeId,pooled,indirect,tags",
+      "rg-oven,Ovens,equipment,hours,cal-base,site,true,true,heat|critical",
     ].join("\n");
     const groupImport = importResourceGroupsCsv(groupCsv, baseModel, genericResourceGroupProfile.mapping);
     expect(groupImport.issues).toEqual([]);
+    expect(groupImport.records[0]?.indirect).toBe(true);
     const withGroups = { ...baseModel, resourceGroups: [...baseModel.resourceGroups, ...groupImport.records] };
 
     const resourceCsv = [
@@ -156,6 +159,19 @@ describe("routing import", () => {
     expect(result.issues.map(issue => issue.code)).toContain("REQUIREMENT_STATE_INVALID");
   });
 
+  it("defaults a blank basis and rejects an invalid basis at row level", () => {
+    const csv = [
+      "productId,revisionId,revision,effectiveFrom,effectiveTo,phaseId,phaseName,startWeeksBeforeShip,endWeeksBeforeShip,allocation,operationId,operationName,operationSequence,resourceGroupId,requirementState,requirementValue,basis,setupRequirementState,setupRequirementValue,setupQuantity,batchSize",
+      "existing,A,A,2026-01-01,,p,Project,4,0,spread,o1,Valid,10,rg-base,value,4,,,,,1",
+      "existing,A,A,2026-01-01,,p,Project,4,0,spread,o2,Invalid,20,rg-base,value,4,perPart,,,,1",
+    ].join("\n");
+    const result = importRoutingCsv(csv, baseModel, genericRoutingProfile.mapping);
+    expect(result.records[0]?.operations[0]?.requirements[0]?.basis).toBeUndefined();
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      "REQUIREMENT_BASIS_INVALID",
+    );
+  });
+
   it("rejects overlapping revisions for the same product", () => {
     const model: CapacityModel = {
       ...baseModel,
@@ -176,5 +192,26 @@ describe("routing import", () => {
     const result = importRoutingCsv(csv, model, genericRoutingProfile.mapping);
     expect(result.records).toHaveLength(0);
     expect(result.issues.map(issue => issue.code)).toContain("REVISION_OVERLAP");
+  });
+});
+
+describe("program import", () => {
+  it("loads project membership and rejects multi-program allocation", () => {
+    const csv = [
+      "programId,programName,productIds,anchorDate,endDate,externalKey,tags",
+      "program-a,Ramp project,existing,2026-01-15,2027-12-31,ERP-1,ramp",
+      "program-b,Duplicate allocation,existing,2026-02-01,,,",
+    ].join("\n");
+    const result = importProgramsCsv(
+      csv,
+      baseModel,
+      genericProgramProfile.mapping,
+    );
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0]?.productIds).toEqual(["existing"]);
+    expect(result.controlTotals.totalProductMemberships).toBe(1);
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      "PRODUCT_IN_MULTIPLE_PROGRAMS",
+    );
   });
 });

@@ -2,11 +2,12 @@ import type { BaseImportMapping } from "./shared.js";
 import type { CalendarCsvMapping, CalendarExceptionCsvMapping } from "./calendars.js";
 import type { DemandCsvMapping } from "./demand.js";
 import type { ProductCsvMapping } from "./products.js";
+import type { ProgramCsvMapping } from "./programs.js";
 import type { ResourceGroupCsvMapping } from "./resourceGroups.js";
 import type { ResourceCsvMapping } from "./resources.js";
 import type { RoutingCsvMapping } from "./routing.js";
 
-export type ImportEntity = "calendars" | "calendarExceptions" | "resourceGroups" | "resources" | "products" | "routing" | "demand";
+export type ImportEntity = "calendars" | "calendarExceptions" | "resourceGroups" | "resources" | "products" | "programs" | "routing" | "demand";
 
 export interface SourceProfile<TMapping extends BaseImportMapping> {
   id: string;
@@ -75,7 +76,28 @@ export const genericResourceGroupProfile: SourceProfile<ResourceGroupCsvMapping>
     calendarIdColumn: "calendarId",
     organizationNodeColumn: "organizationNodeId",
     pooledColumn: "pooled",
+    indirectColumn: "indirect",
     tagsColumn: "tags",
+  },
+};
+
+export const genericProgramProfile: SourceProfile<ProgramCsvMapping> = {
+  id: "generic-program-v1",
+  version: 1,
+  entity: "programs",
+  label: "Generic program CSV",
+  sourceSystem: "Generic CSV",
+  mapping: {
+    sourceSystem: "Generic CSV",
+    programIdColumn: "programId",
+    programNameColumn: "programName",
+    productIdsColumn: "productIds",
+    anchorDateColumn: "anchorDate",
+    endDateColumn: "endDate",
+    externalKeyColumn: "externalKey",
+    externalKeyName: "source",
+    tagsColumn: "tags",
+    dateFormat: "iso",
   },
 };
 
@@ -146,6 +168,7 @@ export const genericRoutingProfile: SourceProfile<RoutingCsvMapping> = {
     resourceGroupIdColumn: "resourceGroupId",
     requirementStateColumn: "requirementState",
     requirementValueColumn: "requirementValue",
+    basisColumn: "basis",
     setupRequirementStateColumn: "setupRequirementState",
     setupRequirementValueColumn: "setupRequirementValue",
     setupQuantityColumn: "setupQuantity",
@@ -178,6 +201,7 @@ export const genericSourceProfiles = [
   genericResourceGroupProfile,
   genericResourceProfile,
   genericProductProfile,
+  genericProgramProfile,
   genericRoutingProfile,
   genericDemandProfile,
 ] as const;

@@ -3,12 +3,14 @@ import {
   importCalendarsCsv,
   importDemandCsv,
   importProductsCsv,
+  importProgramsCsv,
   importResourceGroupsCsv,
   importResourcesCsv,
   importRoutingCsv,
   mergeCalendarsImport,
   mergeDemandImport,
   mergeProductsImport,
+  mergeProgramsImport,
   mergeResourceGroupsImport,
   mergeResourcesImport,
   mergeRoutingImport,
@@ -18,6 +20,7 @@ import {
   type ImportResult,
   type MergeMode,
   type ProductCsvMapping,
+  type ProgramCsvMapping,
   type ResourceCsvMapping,
   type ResourceGroupCsvMapping,
   type RoutingCsvMapping,
@@ -25,7 +28,7 @@ import {
 
 const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === "true";
 
-export type InputEntity = "calendars" | "resource-groups" | "resources" | "products" | "routing" | "demand";
+export type InputEntity = "calendars" | "resource-groups" | "resources" | "products" | "programs" | "routing" | "demand";
 export type InputPreview = ImportResult<unknown>;
 
 export interface InputImportOptions {
@@ -79,6 +82,8 @@ function localPreview(
       return importResourcesCsv(csv, model, mapping as unknown as ResourceCsvMapping, mode) as InputPreview;
     case "products":
       return importProductsCsv(csv, model, mapping as unknown as ProductCsvMapping, mode) as InputPreview;
+    case "programs":
+      return importProgramsCsv(csv, model, mapping as unknown as ProgramCsvMapping, mode) as InputPreview;
     case "routing":
       return importRoutingCsv(csv, model, mapping as unknown as RoutingCsvMapping) as InputPreview;
     case "demand": {
@@ -105,6 +110,8 @@ function localApply(
       return mergeResourcesImport(model, imported.records as CapacityModel["resources"], mode);
     case "products":
       return mergeProductsImport(model, imported.records as CapacityModel["products"], mode);
+    case "programs":
+      return mergeProgramsImport(model, imported.records as NonNullable<CapacityModel["programs"]>, mode);
     case "routing":
       return mergeRoutingImport(model, imported.records as CapacityModel["routingRevisions"]);
     case "demand": {

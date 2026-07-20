@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { CapacityModel } from "@capacity/domain";
-import { capacityModelSchema } from "@capacity/domain";
+import { capacityModelSchema, collectModelIssues } from "@capacity/domain";
 import { calculateCapacity, compareCapacityScenarios } from "@capacity/engine";
 import { explainConstraint } from "@capacity/engine/explain";
 import { northstarRecoveryModel } from "@capacity/fixtures";
@@ -27,7 +27,8 @@ function validationFailure(issues: Array<{ path: PropertyKey[]; message: string;
       issues: issues.map(issue => ({
         path: issue.path.map(String).join("."),
         message: issue.message,
-        code: issue.code,
+        code: issue.message.startsWith("PROGRAM_MISSING") ? "PROGRAM_MISSING" : issue.message.startsWith("PRODUCT_IN_MULTIPLE_PROGRAMS") ? "PRODUCT_IN_MULTIPLE_PROGRAMS" : issue.code,
+        severity: "error",
       })),
     },
   };
@@ -106,11 +107,12 @@ export function routeApiRequest(method: string, path: string, body?: unknown): A
   if (method === "POST" && path === "/v1/validate") {
     const candidate = isRecord(body) && "model" in body ? body.model : body;
     const validation = capacityModelSchema.safeParse(candidate);
-    return validation.success
-      ? {
+    if (validation.success) {
+      const semanticIssues = collectModelIssues(validation.data as CapacityModel);
+      return {
           statusCode: 200,
           body: {
-            valid: true,
+            valid: !semanticIssues.some(issue => issue.severity === "error"),
             modelId: validation.data.modelId,
             counts: {
               products: validation.data.products.length,
@@ -119,10 +121,13 @@ export function routeApiRequest(method: string, path: string, body?: unknown): A
               demandRecords: validation.data.demand.length,
               scenarios: validation.data.scenarios.length,
               scenarioActions: validation.data.scenarioActions?.length ?? 0,
+              programs: validation.data.programs?.length ?? 0,
             },
+            ...(semanticIssues.length ? { issues: semanticIssues.map(issue => ({ path: [issue.entityType, issue.entityId].filter(Boolean).join("."), message: issue.message, code: issue.code, severity: issue.severity })) } : {}),
           },
-        }
-      : {
+        };
+    }
+    return {
           ...validationFailure(validation.error.issues),
           body: {
             valid: false,
