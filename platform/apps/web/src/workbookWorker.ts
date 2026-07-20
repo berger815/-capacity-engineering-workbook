@@ -34,7 +34,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
   let response: Response;
   try {
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    await workbook.xlsx.load(buffer as never);
     if (workbook.worksheets.length > MAX_WORKBOOK_SHEETS) throw new Error(`Workbook contains more than ${MAX_WORKBOOK_SHEETS} worksheets.`);
     const sheetNames = workbook.worksheets.map(sheet => sheet.name);
     const csvBySheet = Object.fromEntries(workbook.worksheets.map(sheet => [sheet.name, sheetCsv(sheet)]));
