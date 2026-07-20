@@ -50,9 +50,11 @@ function storedTarget(scope: WorkbenchScope): WorkbenchTarget | null {
       const parsed = JSON.parse(raw) as WorkbenchTarget;
       if (parsed.entity && validEntity(parsed.entity, scope)) return parsed;
     }
-    const entity = new URL(window.location.href).searchParams.get("entity") as WorkbenchEntity | null;
-    const recordId = new URL(window.location.href).searchParams.get("record") ?? undefined;
-    return entity && validEntity(entity, scope) ? { entity, ...(recordId ? { recordId } : {}) } : null;
+    const url = new URL(window.location.href);
+    const entity = url.searchParams.get("entity") as WorkbenchEntity | null;
+    const recordId = url.searchParams.get("record");
+    if (!entity || !validEntity(entity, scope)) return null;
+    return recordId ? { entity, recordId } : { entity };
   } catch {
     return null;
   }
@@ -141,14 +143,16 @@ export default function ModelWorkbench({ model, baselineScenarioId, scope, targe
     setImportOpen(false);
   }
 
-  const editor = entity === "products" ? <ProductsEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
-    : entity === "calendars" ? <CalendarsEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
-      : entity === "resource-groups" ? <ResourceGroupsEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
-        : entity === "resources" ? <ResourcesEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} />
-          : entity === "routing" ? <RoutingEditor model={draft} mutate={mutate} targetId={effectiveTarget?.recordId} parentTargetId={effectiveTarget?.parentRecordId} />
-            : entity === "demand" ? <DemandEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={effectiveTarget?.recordId} />
-              : entity === "footprint" ? <FootprintWipEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={effectiveTarget?.recordId} />
-                : <ActionLogEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} targetId={effectiveTarget?.recordId} />;
+  const recordTarget = effectiveTarget?.recordId ? { targetId: effectiveTarget.recordId } : {};
+  const routingParent = effectiveTarget?.parentRecordId ? { parentTargetId: effectiveTarget.parentRecordId } : {};
+  const editor = entity === "products" ? <ProductsEditor model={draft} mutate={mutate} {...recordTarget} />
+    : entity === "calendars" ? <CalendarsEditor model={draft} mutate={mutate} {...recordTarget} />
+      : entity === "resource-groups" ? <ResourceGroupsEditor model={draft} mutate={mutate} {...recordTarget} />
+        : entity === "resources" ? <ResourcesEditor model={draft} mutate={mutate} {...recordTarget} />
+          : entity === "routing" ? <RoutingEditor model={draft} mutate={mutate} {...recordTarget} {...routingParent} />
+            : entity === "demand" ? <DemandEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} {...recordTarget} />
+              : entity === "footprint" ? <FootprintWipEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} {...recordTarget} />
+                : <ActionLogEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} {...recordTarget} />;
 
   return <section className="panel model-workbench">
     <div className="panel-heading workbench-heading"><div><span className="eyebrow blue">Model Workbench</span><h2>{scope === "footprint" ? "Footprint and WIP" : scope === "actions" ? "Assessment Action Log" : scope === "all" ? "Inspect and maintain the complete model" : "Build and reconcile the assessment model"}</h2></div><p>One validated editing surface for master data, demand, footprint context, and assessment governance.</p></div>
