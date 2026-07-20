@@ -1,7 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { CapacityModel } from "@capacity/domain";
 import { genericCalendarExceptionProfile } from "@capacity/importer";
-import { applyInputImport, previewInputImport, type InputPreview } from "../inputApi.js";
+import {
+  applyInputImport,
+  previewInputImport,
+  type InputEntity,
+  type InputImportOptions,
+  type InputPreview,
+} from "../inputApi.js";
 import { readTabularFile, type WorkbookData } from "../workbookReader.js";
 import {
   calendarExceptionsCsv,
@@ -13,7 +19,7 @@ import {
 interface StoredProfile {
   id: string;
   version: number;
-  entity: string;
+  entity: InputEntity;
   label: string;
   sourceSystem: string;
   mapping: Record<string, unknown>;
@@ -28,6 +34,12 @@ interface EntityImportPanelProps {
   blocked: boolean;
   onApplied: (model: CapacityModel) => Promise<void> | void;
   onClose: () => void;
+}
+
+interface ConfiguredImportPanelProps extends EntityImportPanelProps {
+  inputEntity: InputEntity;
+  profile: { id: string; label: string; mapping: Record<string, unknown> };
+  exporter: (model: CapacityModel, scenarioId: string) => string;
 }
 
 const selectOptions: Record<string, string[]> = {
@@ -64,13 +76,10 @@ function downloadCsv(filename: string, content: string): void {
   URL.revokeObjectURL(url);
 }
 
-export default function EntityImportPanel({ entity, model, baselineScenarioId, blocked, onApplied, onClose }: EntityImportPanelProps) {
+function ConfiguredImportPanel({ entity, inputEntity, profile, exporter, model, baselineScenarioId, blocked, onApplied, onClose }: ConfiguredImportPanelProps) {
   const definition = entityDefinition(entity);
-  const inputEntity = definition.inputEntity;
-  const profile = definition.profile;
-  const exporter = definition.exportCsv;
-  const [mapping, setMapping] = useState<Record<string, unknown>>(() => cloneMapping(profile?.mapping ?? {}));
-  const [csv, setCsv] = useState(() => exporter?.(model, baselineScenarioId) ?? "");
+  const [mapping, setMapping] = useState<Record<string, unknown>>(() => cloneMapping(profile.mapping));
+  const [csv, setCsv] = useState(() => exporter(model, baselineScenarioId));
   const [exceptionsCsv, setExceptionsCsv] = useState(() => entity === "calendars" ? calendarExceptionsCsv(model) : "");
   const [workbook, setWorkbook] = useState<WorkbookData | null>(null);
   const [selectedSheet, setSelectedSheet] = useState("");
@@ -80,38 +89,17 @@ export default function EntityImportPanel({ entity, model, baselineScenarioId, b
   const [busy, setBusy] = useState<"reading" | "previewing" | "applying" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<StoredProfile[]>(storedProfiles);
-  const [profileId, setProfileId] = useState(profile?.id ?? "custom");
+  const [profileId, setProfileId] = useState(profile.id);
   const [profileName, setProfileName] = useState("");
 
-  useEffect(() => {
-    setMapping(cloneMapping(profile?.mapping ?? {}));
-    setCsv(exporter?.(model, baselineScenarioId) ?? "");
-    setExceptionsCsv(entity === "calendars" ? calendarExceptionsCsv(model) : "");
-    setWorkbook(null);
-    setSelectedSheet("");
-    setPreview(null);
-    setAcceptPartial(false);
-    setMode("replaceById");
-    setError(null);
-    setProfileId(profile?.id ?? "custom");
-  }, [entity, model, baselineScenarioId, profile?.id]);
-
-  const dependencies = definition.dependencies ?? [];
-  const missingDependencies = dependencies
+  const missingDependencies = (definition.dependencies ?? [])
     .filter(required => dependencyCount(model, required) === 0)
-    .map(required => entityDefinition(required === "resource-groups" ? "resource-groups" : required).label);
+    .map(required => entityDefinition(required).label);
   const dependenciesReady = missingDependencies.length === 0;
   const entityProfiles = useMemo(() => saved.filter(item => item.entity === inputEntity), [saved, inputEntity]);
   const totals = preview
     ? Object.entries(preview.controlTotals).filter(([, value]) => typeof value === "number" || typeof value === "string")
     : [];
-
-  if (!inputEntity || !profile || !exporter) {
-    return <aside className="workbench-drawer" aria-label={`${definition.label} import`}>
-      <div className="workbench-drawer-head"><div><span>Import</span><h3>{definition.label}</h3></div><button type="button" className="secondary" onClick={onClose}>Close</button></div>
-      <div className="dependency-note"><strong>No import contract exists for this planning record yet.</strong> Maintain it directly in the Workbench. A guessed browser-only importer would bypass reconciliation and is intentionally not provided.</div>
-    </aside>;
-  }
 
   async function readFile(file: File | undefined): Promise<void> {
     if (!file) return;
@@ -180,16 +168,13 @@ export default function EntityImportPanel({ entity, model, baselineScenarioId, b
     setProfileName("");
   }
 
-  function options() {
-    return {
-      mode,
-      acceptPartial,
-      scenarioId: baselineScenarioId,
-      ...(entity === "calendars" && exceptionsCsv.trim() ? {
-        exceptionsCsv,
-        exceptionMapping: genericCalendarExceptionProfile.mapping,
-      } : {}),
-    };
+  function options(): InputImportOptions {
+    const base: InputImportOptions = { mode, acceptPartial, scenarioId: baselineScenarioId };
+    if (entity === "calendars" && exceptionsCsv.trim()) {
+      base.exceptionsCsv = exceptionsCsv;
+      base.exceptionMapping = genericCalendarExceptionProfile.mapping;
+    }
+    return base;
   }
 
   async function previewImport(): Promise<void> {
@@ -253,4 +238,15 @@ export default function EntityImportPanel({ entity, model, baselineScenarioId, b
       <button className="primary full" type="button" onClick={() => void applyImport()} disabled={blocked || !dependenciesReady || busy !== null || (preview.controlTotals.rejectedRows > 0 && !acceptPartial)}>{busy === "applying" ? "Applying…" : `Apply ${definition.label}`}</button>
     </div> : null}
   </aside>;
+}
+
+export default function EntityImportPanel(props: EntityImportPanelProps) {
+  const definition = entityDefinition(props.entity);
+  if (!definition.inputEntity || !definition.profile || !definition.exportCsv) {
+    return <aside className="workbench-drawer" aria-label={`${definition.label} import`}>
+      <div className="workbench-drawer-head"><div><span>Import</span><h3>{definition.label}</h3></div><button type="button" className="secondary" onClick={props.onClose}>Close</button></div>
+      <div className="dependency-note"><strong>No import contract exists for this planning record yet.</strong> Maintain it directly in the Workbench. A guessed browser-only importer would bypass reconciliation and is intentionally not provided.</div>
+    </aside>;
+  }
+  return <ConfiguredImportPanel {...props} inputEntity={definition.inputEntity} profile={definition.profile} exporter={definition.exportCsv} />;
 }
