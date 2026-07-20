@@ -47,7 +47,7 @@ export default function DecisionExports({ model, comparison }: DecisionExportsPr
     <div className="decision-exports">
       <div className="export-buttons">
         <button className="secondary" type="button" disabled={busy !== null} onClick={() => void download("json")}>
-          {busy === "json" ? "Preparing…" : "Save portable assessment"}
+          {busy === "json" ? "Preparing…" : "Download evidence snapshot"}
         </button>
         <button className="primary" type="button" disabled={busy !== null} onClick={() => void download("html")}>
           {busy === "html" ? "Preparing…" : "Download executive report"}
