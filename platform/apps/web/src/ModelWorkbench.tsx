@@ -59,7 +59,7 @@ export default function ModelWorkbench(props: ModelWorkbenchProps) {
   async function applyValidatedModel(next: Parameters<ModelWorkbenchProps["onModelChange"]>[0]): Promise<void> {
     const result = await validateModel(next);
     if (!result.valid) {
-      const message = validationMessage(result.issues);
+      const message = validationMessage(result.issues ?? []);
       setValidationError(message);
       throw new WorkbenchValidationError(message);
     }
