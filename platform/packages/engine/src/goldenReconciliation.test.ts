@@ -31,7 +31,7 @@ describe("Northstar golden reconciliation", () => {
     expect(northstarRecoveryModel.programs).toBeUndefined();
     expect(digest(baseline)).toBe("a693627e0cad82a91f83bb19fb08ca5ded39fe4ece5b41c59f52cee2cedb35ac");
     expect(digest(recovery)).toBe("71db7a962fd6838f1513d80f4627cee2235c18f31c0e123f4fec69dc4cef946f");
-    expect(digest(comparison)).toBe("PENDING_COMPARISON_HASH");
+    expect(digest(comparison)).toBe("0907e45dc91c8cfb931e2bac649e974a4b6e8207f18338129bffe3d9aa7106d5");
   });
 
   it("locks the 2027 annual and October constraint story", () => {
