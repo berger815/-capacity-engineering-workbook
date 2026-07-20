@@ -15,9 +15,13 @@ import {
   FootprintWipEditor,
 } from "./workbench/PlanningEditors.js";
 import {
+  calculationEntities,
   entitiesForScope,
+  entityCopy,
   entityDefinition,
+  entityReadiness,
   type WorkbenchEntity,
+  type WorkbenchExperience,
   type WorkbenchScope,
   type WorkbenchTarget,
 } from "./workbench/entityDefinitions.js";
@@ -27,6 +31,7 @@ interface ModelWorkbenchProps {
   model: CapacityModel;
   baselineScenarioId: string;
   scope: WorkbenchScope;
+  experience?: WorkbenchExperience;
   target?: WorkbenchTarget | null;
   onModelChange: (model: CapacityModel) => Promise<void> | void;
   onBack: () => void;
@@ -60,7 +65,7 @@ function storedTarget(scope: WorkbenchScope): WorkbenchTarget | null {
   }
 }
 
-export default function ModelWorkbenchCore({ model, baselineScenarioId, scope, target, onModelChange, onBack, onContinue, onReturn }: ModelWorkbenchProps) {
+export default function ModelWorkbenchCore({ model, baselineScenarioId, scope, experience = "expert", target, onModelChange, onBack, onContinue, onReturn }: ModelWorkbenchProps) {
   const definitions = useMemo(() => entitiesForScope(scope), [scope]);
   const [localTarget, setLocalTarget] = useState<WorkbenchTarget | null>(() => target ?? storedTarget(scope));
   const effectiveTarget = target ?? localTarget;
@@ -71,7 +76,10 @@ export default function ModelWorkbenchCore({ model, baselineScenarioId, scope, t
   const [saving, setSaving] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const definition = entityDefinition(entity);
+  const copy = entityCopy(definition, experience);
   const dirty = dirtySections.size > 0;
+  const readiness = calculationEntities.map(id => ({ id, ...entityReadiness(draft, id, baselineScenarioId) }));
+  const readyCount = readiness.filter(item => item.ready).length;
 
   useEffect(() => {
     setDraft(copyModel(model));
@@ -155,16 +163,18 @@ export default function ModelWorkbenchCore({ model, baselineScenarioId, scope, t
                 : <ActionLogEditor model={draft} mutate={mutate} scenarioId={baselineScenarioId} {...recordTarget} />;
 
   return <section className="panel model-workbench">
-    <div className="panel-heading workbench-heading"><div><span className="eyebrow blue">Model Workbench</span><h2>{scope === "footprint" ? "Footprint and WIP" : scope === "actions" ? "Assessment Action Log" : scope === "all" ? "Inspect and maintain the complete model" : "Build and reconcile the assessment model"}</h2></div><p>One validated editing surface for master data, demand, footprint context, and assessment governance.</p></div>
+    <div className="panel-heading workbench-heading"><div><span className="eyebrow blue">Model Workbench</span><h2>{scope === "footprint" ? (experience === "guided" ? "Space and work in process" : "Footprint and WIP") : scope === "actions" ? (experience === "guided" ? "Assessment actions" : "Assessment Action Log") : scope === "all" ? "Inspect and maintain the complete model" : experience === "guided" ? "Build the supplier capacity model" : "Build and reconcile the assessment model"}</h2></div><p>{experience === "guided" ? "Enter what the supplier makes, when they work, the people and machines available, hours per part, and customer demand." : "One validated editing surface for master data, demand, footprint context, and assessment governance."}</p></div>
 
-    {effectiveTarget?.returnTo ? <div className="workbench-breadcrumb"><span>{effectiveTarget.returnTo.label}</span><b>›</b><strong>{definition.label}</strong><button className="secondary" type="button" onClick={() => confirmLeave(() => onReturn?.(effectiveTarget.returnTo!))}>Return to {effectiveTarget.returnTo.label}</button></div> : null}
+    {effectiveTarget?.returnTo ? <div className="workbench-breadcrumb"><span>{effectiveTarget.returnTo.label}</span><b>›</b><strong>{copy.label}</strong><button className="secondary" type="button" onClick={() => confirmLeave(() => onReturn?.(effectiveTarget.returnTo!))}>Return to {effectiveTarget.returnTo.label}</button></div> : null}
 
-    <div className="workbench-commandbar"><div><strong>{definition.label}</strong><span>{definition.note}</span></div><div className="workbench-command-actions">{definition.inputEntity ? <button className="secondary" type="button" onClick={() => setImportOpen(true)} disabled={dirty}>Import from file</button> : <span className="planning-only">Direct planning record</span>}<button className="secondary" type="button" onClick={discard} disabled={!dirty || saving}>Discard</button><button className="primary" type="button" onClick={() => void save()} disabled={!dirty || saving}>{saving ? "Validating…" : `Save ${dirtySections.size > 1 ? "model changes" : "changes"}`}</button></div></div>
+    {(scope === "core-data" || scope === "all") ? <div className={`workbench-readiness ${readyCount === calculationEntities.length ? "ready" : "building"}`}><div><span>Calculation readiness</span><strong>{readyCount} of {calculationEntities.length} input sections ready</strong><small>{readyCount === calculationEntities.length ? "The draft has the minimum usable inputs for a capacity calculation." : "Complete the needed sections below. You can import supplier spreadsheets or enter records directly."}</small></div><div className="readiness-progress" aria-label={`${readyCount} of ${calculationEntities.length} ready`}><i style={{ width: `${readyCount / calculationEntities.length * 100}%` }} /></div></div> : null}
 
-    {dirty ? <div className="unsaved-banner"><strong>Unsaved model changes</strong><span>{[...dirtySections].map(item => entityDefinition(item as WorkbenchEntity).label).join(", ")}</span></div> : null}
+    <div className="workbench-commandbar"><div><strong>{copy.label}</strong><span>{copy.note}</span></div><div className="workbench-command-actions">{definition.inputEntity ? <button className="secondary" type="button" onClick={() => setImportOpen(true)} disabled={dirty}>Import supplier file</button> : <span className="planning-only">Direct planning record</span>}<button className="secondary" type="button" onClick={discard} disabled={!dirty || saving}>Discard</button><button className="primary" type="button" onClick={() => void save()} disabled={!dirty || saving}>{saving ? "Validating…" : `Save ${dirtySections.size > 1 ? "model changes" : "changes"}`}</button></div></div>
+
+    {dirty ? <div className="unsaved-banner"><strong>Unsaved model changes</strong><span>{[...dirtySections].map(item => entityCopy(entityDefinition(item as WorkbenchEntity), experience).label).join(", ")}</span></div> : null}
 
     <div className={`workbench-layout ${importOpen ? "drawer-open" : ""}`}>
-      <nav className="entity-rail" aria-label="Model entities">{definitions.map(item => { const count = item.count(draft); const sectionDirty = dirtySections.has(item.id); return <button key={item.id} type="button" className={entity === item.id ? "active" : ""} onClick={() => { setEntity(item.id); setImportOpen(false); setLocalTarget(null); window.sessionStorage.removeItem("capacity-workbench-target"); }}><span><strong>{item.label}</strong><small>{item.note}</small></span><b>{count.toLocaleString()}</b>{sectionDirty ? <i title="Unsaved changes">•</i> : null}</button>; })}</nav>
+      <nav className="entity-rail" aria-label="Model entities">{definitions.map(item => { const count = item.count(draft); const sectionDirty = dirtySections.has(item.id); const itemCopy = entityCopy(item, experience); const status = entityReadiness(draft, item.id, baselineScenarioId); const calculationInput = calculationEntities.includes(item.id); return <button key={item.id} type="button" className={entity === item.id ? "active" : ""} onClick={() => { setEntity(item.id); setImportOpen(false); setLocalTarget(null); window.sessionStorage.removeItem("capacity-workbench-target"); }}><span><strong>{itemCopy.label}</strong><small>{itemCopy.note}</small>{calculationInput ? <em className={status.ready ? "ready" : "needed"}>{status.ready ? "Ready" : "Needed"} · {status.reason}</em> : null}</span><b>{count.toLocaleString()}</b>{sectionDirty ? <i title="Unsaved changes">•</i> : null}</button>; })}</nav>
       <div className="workbench-editor" data-entity={entity}>{editor}</div>
       {importOpen ? <EntityImportPanel entity={entity} model={model} baselineScenarioId={baselineScenarioId} blocked={dirty} onApplied={applyImport} onClose={() => setImportOpen(false)} /> : null}
     </div>
