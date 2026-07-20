@@ -3,13 +3,19 @@ import { calculateCapacity } from "@capacity/engine";
 import { northstarRecoveryModel } from "@capacity/fixtures";
 import { routeApiRequest } from "./app.js";
 
+const expectedAppliedActions = [
+  "action-weld-cross-train",
+  "action-heat-overflow",
+  "action-add-positioners",
+  "action-weld-hiring",
+  "action-add-assembly",
+  "action-add-test-stand",
+];
+
 describe("constraint explanation API", () => {
   it("returns fully reconciled product, operation, and demand lineage", () => {
     const calculation = calculateCapacity(northstarRecoveryModel, "recovery-1");
-    const row = calculation.results
-      .filter(item => item.load > 0)
-      .sort((a, b) => b.load - a.load)[0]!;
-
+    const row = calculation.results.filter(item => item.load > 0).sort((a, b) => b.load - a.load)[0]!;
     const response = routeApiRequest("POST", "/v1/explain", {
       model: northstarRecoveryModel,
       scenarioId: "recovery-1",
@@ -39,7 +45,7 @@ describe("constraint explanation API", () => {
       phaseAllocation: expect.any(Number),
     });
     expect(explanation.demandSourceScenarioId).toBe("baseline");
-    expect(explanation.appliedActionIds).toHaveLength(3);
+    expect(explanation.appliedActionIds).toEqual(expectedAppliedActions);
   });
 
   it("rejects a resource-period that is not present in the calculation horizon", () => {
