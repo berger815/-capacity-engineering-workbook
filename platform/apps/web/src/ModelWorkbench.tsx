@@ -23,7 +23,7 @@ export default function ModelWorkbench(props: ModelWorkbenchProps) {
   useEffect(() => {
     const guardNavigation = (event: MouseEvent) => {
       const element = event.target instanceof Element ? event.target : null;
-      const leavingControl = element?.closest(".step-button, .topbar-actions .secondary.light");
+      const leavingControl = element?.closest(".step-button, .assessment-home-button");
       const unsaved = document.querySelector(".model-workbench .unsaved-banner");
       if (!leavingControl || !unsaved) return;
       if (!window.confirm("Discard unsaved Workbench changes?")) {
