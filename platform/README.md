@@ -62,7 +62,8 @@ The working slice includes:
 - direct-versus-indirect analysis and reporting;
 - governing-constraint identification;
 - source-aligned Northstar v2 fixture with four distinct routes, 144 monthly demand records across 2027–2029, and 2026 pre-ramp load;
-- deterministic golden hashes plus business controls for annual utilization, peak periods, pre-ramp load, recovery, and explanation reconciliation;
+- deterministic engine regression digests plus business controls for annual utilization, peak periods, pre-ramp load, recovery, and explanation reconciliation;
+- executable reconciliation against the pinned v6.86 workbook functions for shared labor and equipment load, capacity, and OEE inputs;
 - governed Northstar recovery fixture with dated labor, equipment, and temporary-capacity actions;
 - baseline demand inheritance without copied or mutated demand records;
 - baseline-versus-recovery comparison with load, capacity, gap, and utilization deltas;

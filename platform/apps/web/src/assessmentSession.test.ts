@@ -105,6 +105,25 @@ describe("local assessment lifecycle", () => {
     expect(opened.comparison).toBeNull();
   });
 
+  it("preserves indirect resource classification when a working file is saved and reopened", () => {
+    const modelWithIndirectResource = structuredClone(model);
+    modelWithIndirectResource.resourceGroups[0]!.indirect = true;
+
+    const content = serializeAssessmentSession({
+      sessionSchemaVersion: "1.0.0",
+      savedAt: "2026-07-20T12:00:00.000Z",
+      origin: "new",
+      activeStep: "data",
+      experience: "guided",
+      model: modelWithIndirectResource,
+      calculation: null,
+      comparison: null,
+    });
+
+    const opened = parseAssessmentFile(content);
+    expect(opened.model.resourceGroups[0]?.indirect).toBe(true);
+  });
+
   it("reopens a decision evidence package assessment snapshot", () => {
     const content = JSON.stringify({
       packageSchemaVersion: "1.0.0",
