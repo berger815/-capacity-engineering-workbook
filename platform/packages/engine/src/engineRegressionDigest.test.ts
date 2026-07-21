@@ -22,7 +22,7 @@ function period(result: ReturnType<typeof calculateCapacity>, groupId: string, p
   return row!;
 }
 
-describe("Northstar golden reconciliation", () => {
+describe("Northstar engine regression digest", () => {
   const baseline = calculateCapacity(northstarRecoveryModel, "baseline");
   const recovery = calculateCapacity(northstarRecoveryModel, "recovery-1");
   const comparison = compareCapacityScenarios(northstarRecoveryModel, "baseline", "recovery-1");
